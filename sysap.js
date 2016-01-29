@@ -3,6 +3,7 @@ var xmpp_client = require('node-xmpp-client');
 var ltx = require('ltx');
 var helper = require('./ltxhelper.js');
 var pd = require('pretty-data').pd;
+var util = require('util');
 
 var house = {
 	floor : {},
@@ -169,10 +170,35 @@ function masterUpdate (stanza) {
 			// actuators
 			helper.getElements(allData, ['devices', 'device']).forEach(function (device) {
 				
-				
+				var sn = helper.getAttr(device, 'serialNumber');
+				if (sn) {
+					var type = helper.getAttr(device, 'nameId');
+					actuators[sn] = {
+						serialNumber: sn,
+						type: type,
+						typeName: strings[type],
+						channels: {}
+					};
+					helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+						cn = helper.getAttr(channel, 'i');
+						if (cn) {
+							actuators[sn]['channels'][cn] = {
+								datapoints: {}
+							};
+							['inputs', 'outputs'].forEach(function (put) {
+								helper.getElements(channel, [put, 'dataPoint']).forEach(function (dataPoint) {
+									var dp = helper.getAttr(dataPoint, 'i');
+									if (dp) {
+										actuators[sn]['channels'][cn]['datapoints'][dp] = helper.getElementText(dataPoint, ['value']);
+									}
+								});
+							});
+						}
+					});
+				}
 				
 				// NICE INFO FOR DEV
-				//actuators[string.attrs.nameId] = string.getText();
+				//actuators[strings[device.attrs.nameId]] = niceXML(device);
 				var floor, room, name;
 				if (device.getChildByAttr('name', 'floor')) {
 					floor = house.floor[device.getChildByAttr('name', 'floor').getText()];
@@ -183,7 +209,7 @@ function masterUpdate (stanza) {
 				if (device.getChildByAttr('name', 'displayName')) {
 					name = device.getChildByAttr('name', 'displayName').getText();
 				}
-				console.log(device.attrs.serialNumber + ': ' + floor + ' > ' + room + ' > ' + name + ' [' + strings[device.attrs.nameId] + ']');
+//				console.log(device.attrs.serialNumber + ': ' + floor + ' > ' + room + ' > ' + name + ' [' + strings[device.attrs.nameId] + ']');
 				// END NICE INFO
 				
 			});
@@ -192,6 +218,7 @@ function masterUpdate (stanza) {
 	});
 	
 	console.log(house);
+	console.log(util.inspect(actuators, {showHidden: false, depth: null}));
 //	console.log(strings);
 	
 }

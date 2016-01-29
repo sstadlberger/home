@@ -10,7 +10,7 @@ helper.getElement = function (element, path) {
 }
 
 helper.getElements = function (element, path) {
-	var result = [];
+	var result;
 	var current = path.shift();
 	
 	if (path.length == 0 && element.getChildren(current)) {
@@ -20,6 +20,9 @@ helper.getElements = function (element, path) {
 		if (result && path.length > 0) {
 			result = this.getElements(result, path);
 		}
+	}
+	if (!result) {
+		result = [];
 	}
 
 	return result;
