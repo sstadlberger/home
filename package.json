@@ -1,0 +1,13 @@
+{
+  "name": "home",
+  "version": "0.0.1",
+  "description": "Home is a custom serve/fronted for Busch Jäger free@home",
+  "main": "home.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stefan Stadlberger",
+  "license": "UNLICENSED"
+}
