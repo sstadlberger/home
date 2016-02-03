@@ -12,6 +12,17 @@ var house = {
 var actuators = {};
 var strings = {};
 
+// only include devices in the data structure that have useful state
+// this list may be incomplete, as I don't have every device
+// 1013: Sensor/ Jalousieaktor 1/1-fach
+// 9004: Raumtemperaturregler
+// 100E: Sensor/ Schaltaktor 2/1-fach
+// 101C: Dimmaktor 4-fach
+// B002: Schaltaktor 4-fach, 16A, REG
+// B003: Heizungsaktor 6-fach, REG
+// B001: Jalousieaktor 4-fach, REG
+var withStatus = ['1013', '9004', '100E', '101C', 'B002', 'B003', 'B001'];
+
 var sysap = new xmpp_client({
 	bosh: {
 		url: config.bosh.url
@@ -171,16 +182,17 @@ function masterUpdate (stanza) {
 			helper.getElements(allData, ['devices', 'device']).forEach(function (device) {
 				
 				var sn = helper.getAttr(device, 'serialNumber');
-				if (sn) {
-					var type = helper.getAttr(device, 'nameId');
+				var deviceId = helper.getAttr(device, 'deviceId');
+				if (sn && withStatus.indexOf(deviceId) != -1) {
+					var nameId = helper.getAttr(device, 'nameId');
 					actuators[sn] = {
 						serialNumber: sn,
-						type: type,
-						typeName: strings[type],
+						deviceId: deviceId,
+						typeName: strings[nameId],
 						channels: {}
 					};
 					helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
-						cn = helper.getAttr(channel, 'i');
+						var cn = helper.getAttr(channel, 'i');
 						if (cn) {
 							actuators[sn]['channels'][cn] = {
 								datapoints: {}
@@ -197,21 +209,6 @@ function masterUpdate (stanza) {
 					});
 				}
 				
-				// NICE INFO FOR DEV
-				//actuators[strings[device.attrs.nameId]] = niceXML(device);
-				var floor, room, name;
-				if (device.getChildByAttr('name', 'floor')) {
-					floor = house.floor[device.getChildByAttr('name', 'floor').getText()];
-				}
-				if (device.getChildByAttr('name', 'room')) {
-					room = house.room[device.getChildByAttr('name', 'room').getText()];
-				}
-				if (device.getChildByAttr('name', 'displayName')) {
-					name = device.getChildByAttr('name', 'displayName').getText();
-				}
-//				console.log(device.attrs.serialNumber + ': ' + floor + ' > ' + room + ' > ' + name + ' [' + strings[device.attrs.nameId] + ']');
-				// END NICE INFO
-				
 			});
 			
 		});
@@ -219,7 +216,6 @@ function masterUpdate (stanza) {
 	
 	console.log(house);
 	console.log(util.inspect(actuators, {showHidden: false, depth: null}));
-//	console.log(strings);
 	
 }
 
