@@ -5,6 +5,7 @@ var helper = require('./ltxhelper.js');
 var pd = require('pretty-data').pd;
 var util = require('util');
 
+// this set of vars contains/will contain the master status
 var house = {
 	floor : {},
 	room : {}
@@ -27,48 +28,51 @@ var sysap = new xmpp_client({
 	bosh: {
 		url: config.bosh.url
 	},
-	jid: config.bosh.jid,
+	jid: config.bosh.jid + '/' + config.bosh.resource,
 	password: config.bosh.password,
 	preferred: 'DIGEST-MD5'
 });
 
+/**
+ * construct and sends a request for the master update
+ */
 var getAll = function () {
-		var allData = new xmpp_client.Element('iq', {
+	var allData = new xmpp_client.Element('iq', {
 		type: 'set',
 		to: 'mrha@busch-jaeger.de/rpc',
 	})
-	.c('query', {
-		xmlns: 'jabber:iq:rpc'
-	})
-		.c('methodCall', {})
-			.c('methodName', {})
-				.t('RemoteInterface.getAll').up()
-			.c('params', {})
-				.c('param', {})
-					.c('value', {})
-						.c('string', {})
-							.t('de')
+		.c('query', {
+			xmlns: 'jabber:iq:rpc'
+		})
+			.c('methodCall', {})
+				.c('methodName', {})
+					.t('RemoteInterface.getAll').up()
+				.c('params', {})
+					.c('param', {})
+						.c('value', {})
+							.c('string', {})
+								.t('de')
+								.up()
 							.up()
 						.up()
-					.up()
-				.c('param', {})
-					.c('value', {})
-						.c('int', {})
-							.t('4')
+					.c('param', {})
+						.c('value', {})
+							.c('int', {})
+								.t('4')
+								.up()
 							.up()
 						.up()
-					.up()
-				.c('param', {})
-					.c('value', {})
-						.c('int', {})
-							.t('0')
+					.c('param', {})
+						.c('value', {})
+							.c('int', {})
+								.t('0')
+								.up()
 							.up()
 						.up()
-					.up()
-				.c('param', {})
-					.c('value', {})
-						.c('int', {})
-							.t('0')
+					.c('param', {})
+						.c('value', {})
+							.c('int', {})
+								.t('0');
 	
 	sysap.send(allData);
 }
@@ -81,11 +85,13 @@ sysap.on('online', function() {
 	console.log('online');
 	
 	var talkToMe =  new xmpp_client.Element('presence', {
+		from: config.bosh.jid,
 		type: 'subscribe',
 		to: 'mrha@busch-jaeger.de/rpc',
 		xmlns: 'jabber:client'
 	});
 	sysap.send(talkToMe);
+	
 	var talkToMe2 =  new xmpp_client.Element('presence', {
 		xmlns: 'jabber:client'
 	})
@@ -95,7 +101,7 @@ sysap.on('online', function() {
 			node: 'http://gonicus.de/caps',
 		});
 	sysap.send(talkToMe2);
-	getAll();
+//	getAll();
 	console.log('subscribed');
 });
 
@@ -135,10 +141,14 @@ function updatePacket (stanza) {
 		helper.getElements(update, ['devices', 'device']).forEach(function (device) {
 			if (helper.getAttr(device, 'commissioningState') == 'ready') {
 				helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+				
 					console.log('Channel: ' + channel.attrs.i);
+					
 					channel.children.forEach(function (dp) {
 						dp.getChildren('dataPoint').forEach(function (datapoint) {
+						
 							console.log(datapoint.attrs.i + ': ' + datapoint.getChildText('value'));
+							
 						});
 					
 						// XXX DEV ONLY
