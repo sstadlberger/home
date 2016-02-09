@@ -13,15 +13,17 @@ var house = {
 var actuators = {};
 var strings = {};
 
-// only include devices in the data structure that have useful state
-// this list may be incomplete, as I don't have every device
-// 1013: Sensor/ Jalousieaktor 1/1-fach
-// 9004: Raumtemperaturregler
-// 100E: Sensor/ Schaltaktor 2/1-fach
-// 101C: Dimmaktor 4-fach
-// B002: Schaltaktor 4-fach, 16A, REG
-// B003: Heizungsaktor 6-fach, REG
-// B001: Jalousieaktor 4-fach, REG
+/**
+ * only include devices in the data structure that have useful state
+ * this list may be incomplete, as I don't have every device
+ * 1013: Sensor/ Jalousieaktor 1/1-fach
+ * 9004: Raumtemperaturregler
+ * 100E: Sensor/ Schaltaktor 2/1-fach
+ * 101C: Dimmaktor 4-fach
+ * B002: Schaltaktor 4-fach, 16A, REG
+ * B003: Heizungsaktor 6-fach, REG
+ * B001: Jalousieaktor 4-fach, REG
+ */
 var withStatus = ['1013', '9004', '100E', '101C', 'B002', 'B003', 'B001'];
 
 var sysap = new xmpp_client({
@@ -77,6 +79,11 @@ var getAll = function () {
 	sysap.send(allData);
 }
 
+/**
+ * just a helper for development, prints a nice xml structure
+ * @param {Object} ltxIn - a ltx xml object
+ * @return {string} stringyfied and nicely formatted xml
+ */
 var niceXML = function (ltxIn) {
 	return pd.xml(ltxIn.toString())
 }
@@ -101,7 +108,9 @@ sysap.on('online', function() {
 			node: 'http://gonicus.de/caps',
 		});
 	sysap.send(talkToMe2);
-//	getAll();
+	
+	getAll();
+	
 	console.log('subscribed');
 });
 
@@ -116,15 +125,13 @@ sysap.on('stanza', function(stanza) {
 		stanza.attrs.from == 'mrha@busch-jaeger.de' && 
 		helper.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
-		console.log('update packet:');
 		updatePacket(stanza);
 	
 	
 	// MASTER STATUS UPDATE
 	} else if (stanza.attrs.type == 'result' && 
 			   stanza.attrs.from == 'mrha@busch-jaeger.de/rpc') {
-		
-		console.log('master update:');
+			   
 		masterUpdate(stanza);
 	
 	
@@ -134,36 +141,61 @@ sysap.on('stanza', function(stanza) {
 	}
 });
 
+sysap.on('error', function (e) {
+	console.log(e)
+});
 
+
+/**
+ * parses an update packet and updates the master data structure
+ * requires a pre-populated actuators object
+ * @param {Object} stanza - a node-xmpp-client xml data packet
+ */
 function updatePacket (stanza) {
+
 	helper.getElements(stanza, ['event', 'items', 'item']).forEach(function (item) {
+		
+		// parse payload
+		// no XML verification, let's hope that Busch Jäger produces writes valid XML in this case
 		var update = ltx.parse(helper.getElementText(item, ['update', 'data']));
-		helper.getElements(update, ['devices', 'device']).forEach(function (device) {
-			if (helper.getAttr(device, 'commissioningState') == 'ready') {
-				helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+		
+		if (update) { 
+			helper.getElements(update, ['devices', 'device']).forEach(function (device) {
 				
-					console.log('Channel: ' + channel.attrs.i);
-					
-					channel.children.forEach(function (dp) {
-						dp.getChildren('dataPoint').forEach(function (datapoint) {
+				// is a valid device and init is completed
+				var sn = helper.getAttr(device, 'serialNumber');
+				if (sn && sn != '' && actuators[sn]) {
+				
+					// valid update packet that is of interest
+					if (helper.getAttr(device, 'commissioningState') == 'ready' && withStatus.indexOf(actuators[sn].deviceId) != -1) {
 						
-							console.log(datapoint.attrs.i + ': ' + datapoint.getChildText('value'));
-							
+						// iterate over all channels and datapoints
+						helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+							var cn = helper.getAttr(channel, 'i');
+							if (cn) {
+								channel.children.forEach(function (dp) {
+									dp.getChildren('dataPoint').forEach(function (datapoint) {
+										var pt = helper.getAttr(datapoint, 'i');
+										var vl = helper.getElementText(datapoint, ['value']);
+										if (pt && vl) {
+											actuators[sn].channels[cn].datapoints[pt] = vl;
+										}
+									});
+								});
+							}
 						});
-					
-						// XXX DEV ONLY
-						if (dp.name != 'inputs' && dp.name != 'outputs' && dp.children.length > 0) {
-							console.log('NEW STUFF: ' + "\n" + pd.xml(dp.toString()));
-						}
-					
-					});
-				});
-			}
-			
-		});
+					}
+				}
+			});
+		}
 	});
 }
 
+
+/**
+ * parses the master packet and creates the master data struchture
+ * @param {Object} stanza - a node-xmpp-client xml data packet
+ */
 function masterUpdate (stanza) {
 	helper.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
 		helper.getElements(param, ['value', 'string']).forEach(function (value) {
