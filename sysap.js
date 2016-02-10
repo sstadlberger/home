@@ -5,6 +5,20 @@ var helper = require('./ltxhelper.js');
 var pd = require('pretty-data').pd;
 var util = require('util');
 
+var external = {};
+
+external.test = function (x) {
+	console.log(x);
+	return x;
+};
+
+external.info = function () {
+	console.log('http info');
+	return JSON.stringify(actuators);
+};
+
+module.exports = external;
+
 // this set of vars contains/will contain the master status
 var house = {
 	floor : {},
@@ -262,7 +276,7 @@ function masterUpdate (stanza) {
 	});
 	
 	console.log(house);
-	console.log(util.inspect(actuators, {showHidden: false, depth: null}));
+	console.log(util.inspect(actuators, {showHidden: false, depth: null, colors: true}));
 	
 }
 
