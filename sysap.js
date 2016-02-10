@@ -167,13 +167,18 @@ function updatePacket (stanza) {
 				if (sn && sn != '' && actuators[sn]) {
 				
 					// valid update packet that is of interest
-					if (helper.getAttr(device, 'commissioningState') == 'ready' && withStatus.indexOf(actuators[sn].deviceId) != -1) {
+					if (helper.getAttr(device, 'commissioningState') == 'ready') {
 						
 						// iterate over all channels and datapoints
 						helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
 							var cn = helper.getAttr(channel, 'i');
 							if (cn) {
 								channel.children.forEach(function (dp) {
+									if (!actuators[sn]['channels'][cn]) {
+										actuators[sn]['channels'][cn] = {
+											datapoints: {}
+										};
+									}
 									dp.getChildren('dataPoint').forEach(function (datapoint) {
 										var pt = helper.getAttr(datapoint, 'i');
 										var vl = helper.getElementText(datapoint, ['value']);
