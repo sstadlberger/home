@@ -1,26 +1,21 @@
-var http = require('http');
-var router = require('router');
-var finalhandler = require('finalhandler');
-var compression = require('compression');
+var express = require('express');
+var http = express();
 var sysap = require('./sysap.js');
 
-var rt = router();
-var server = http.createServer(function onRequest(req, res) {
-	rt(req, res, finalhandler(req, res));
-});
- 
-rt.use(compression());
- 
-rt.get('/test', function (req, res) {
-	res.statusCode = 200;
-	res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-	res.end(sysap.test('asd') + '\n');
-});
- 
-rt.get('/info', function (req, res) {
-	res.statusCode = 200;
-	res.setHeader('Content-Type', 'application/json; charset=utf-8');
-	res.end(sysap.info() + '\n');
+http.get('/info/:sn?/:ch?/:dp*?', function (req, res) {
+	var data = sysap.info();
+	if (req.params.sn && data[req.params.sn]) {
+		data = data[req.params.sn];
+		if (req.params.sn && data.channels[req.params.ch]) {
+			data = data.channels[req.params.ch];
+			if (req.params.dp && data.datapoints[req.params.dp]) {
+				data = data.datapoints[req.params.dp];
+			}
+		}
+	}
+	res.json(data);
 });
 
-server.listen(8080);
+http.listen(8080, function () {
+  console.log('http api loaded');
+});

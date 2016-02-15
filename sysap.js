@@ -7,14 +7,8 @@ var util = require('util');
 
 var external = {};
 
-external.test = function (x) {
-	console.log(x);
-	return x;
-};
-
 external.info = function () {
-	console.log('http info');
-	return JSON.stringify(actuators);
+	return actuators;
 };
 
 module.exports = external;
