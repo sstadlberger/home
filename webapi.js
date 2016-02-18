@@ -13,9 +13,17 @@ http.get('/info/:sn?/:ch?/:dp*?', function (req, res) {
 			}
 		}
 	}
+	console.log('[WEB] get info');
 	res.json(data);
 });
 
+http.get('/set/:sn/:ch/:dp/:vl', function (req, res) {
+	var data = sysap.info();
+	sysap.action(req.params.sn, req.params.ch, req.params.dp, req.params.vl);
+	console.log('[WEB] set actuator: ' + req.params.sn + '/' + req.params.ch + '/' + req.params.dp + ': ' + req.params.vl);
+	res.send(req.params.sn + '/' + req.params.ch + '/' + req.params.dp + ': ' + req.params.vl);
+});
+
 http.listen(8080, function () {
-  console.log('http api loaded');
+  console.log('[WEB] http api loaded');
 });

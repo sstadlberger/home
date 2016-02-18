@@ -11,6 +11,34 @@ external.info = function () {
 	return actuators;
 };
 
+external.action = function (sn, ch, dp, vl) {
+	var setData = new xmpp_client.Element('iq', {
+		type: 'set',
+		to: 'mrha@busch-jaeger.de/rpc',
+	})
+		.c('query', {
+			xmlns: 'jabber:iq:rpc'
+		})
+			.c('methodCall', {})
+				.c('methodName', {})
+					.t('RemoteInterface.setDatapoint').up()
+				.c('params', {})
+					.c('param', {})
+						.c('value', {})
+							.c('string', {})
+								.t(sn + '/' + ch + '/' + dp)
+								.up()
+							.up()
+						.up()
+					.c('param', {})
+						.c('value', {})
+							.c('string', {})
+								.t(vl);
+	
+	sysap.send(setData);
+	console.log('[OUT] set actuator: ' + sn + '/' + ch + '/' + dp + ': ' + vl);
+}
+
 module.exports = external;
 
 // this set of vars contains/will contain the master status
@@ -85,6 +113,7 @@ var getAll = function () {
 								.t('0');
 	
 	sysap.send(allData);
+	console.log('[OUT] get master update');
 }
 
 /**
@@ -93,11 +122,11 @@ var getAll = function () {
  * @return {string} stringyfied and nicely formatted xml
  */
 var niceXML = function (ltxIn) {
-	return pd.xml(ltxIn.toString())
+	return pd.xml(ltxIn.root().toString())
 }
 
 sysap.on('online', function() {
-	console.log('online');
+	console.log('[online]');
 	
 	var talkToMe =  new xmpp_client.Element('presence', {
 		from: config.bosh.jid,
@@ -117,15 +146,15 @@ sysap.on('online', function() {
 		});
 	sysap.send(talkToMe2);
 	
-	getAll();
+	console.log('[OUT] subscribe');
 	
-	console.log('subscribed');
+	getAll();
 });
 
 sysap.on('stanza', function(stanza) {
 
-	var rightNow = new Date();
-	console.log("\n\n"+rightNow.toISOString());
+/*	var rightNow = new Date();
+	console.log("\n\n"+rightNow.toISOString());*/
 	
 	
 	// UPDATE PACKET
@@ -133,19 +162,22 @@ sysap.on('stanza', function(stanza) {
 		stanza.attrs.from == 'mrha@busch-jaeger.de' && 
 		helper.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
+		console.log('[IN] update packet');
 		updatePacket(stanza);
 	
 	
 	// MASTER STATUS UPDATE
 	} else if (stanza.attrs.type == 'result' && 
 			   stanza.attrs.from == 'mrha@busch-jaeger.de/rpc') {
-			   
-		masterUpdate(stanza);
+		
+		console.log('[IN] result packet');
+		methodResponse(stanza);
 	
 	
 	// EVERYTHING ELSE
 	} else {
-		console.log('Incoming stanza: ' + "\n" + pd.xml(stanza.toString()) + "\n");
+		console.log('[IN] unknown stanza:');
+		console.log(niceXML(stanza));
 	}
 });
 
@@ -209,68 +241,82 @@ function updatePacket (stanza) {
  * parses the master packet and creates the master data struchture
  * @param {Object} stanza - a node-xmpp-client xml data packet
  */
-function masterUpdate (stanza) {
+function methodResponse (stanza) {
 	helper.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
+		
+		helper.getElements(param, ['value', 'boolean']).forEach(function (value) {
+			var result = value.getText();
+			if (result == 1) {
+				console.log('[IN] result update succes');
+			} else if (result == 0) {
+				console.log('[IN] result update failure');
+			} else {
+				console.log('[IN] result update unknown: ' + result);
+			}
+		});
+		
 		helper.getElements(param, ['value', 'string']).forEach(function (value) {
 			
-			// valid XML is not necessary for all parsers, but it helps (and ltx is small and fast BECAUSE it doesn't accept shitty XML)
 			var allDataText = value.getText();
-			allDataText = allDataText.replace('<Channel selector OR>', '&lt;Channel selector OR&gt;');
-			allDataText = allDataText.replace('<Channel selector AND>', '&lt;Channel selector AND&gt;');
-			allDataText = allDataText.replace('<The following strings from F000 to FFFF are not to be translated!>', '&lt;The following strings from F000 to FFFF are not to be translated!&gt;');
-			var allData = ltx.parse(allDataText);
-			
-			// floors and rooms
-			helper.getElements(allData, ['entities', 'entity']).forEach(function (entity) {
-				var entityData = JSON.parse(entity.getText());
-				if (entity.attrs.type == 'floor' || entity.attrs.type == 'room') {
-					house[entity.attrs.type][entity.attrs.uid] = entityData.name;
-				}
-			});
-			
-			// strings
-			helper.getElements(allData, ['strings', 'string']).forEach(function (string) {
-				strings[string.attrs.nameId] = string.getText();
-			});
-			
-			// actuators
-			helper.getElements(allData, ['devices', 'device']).forEach(function (device) {
+
+			if (allDataText.length > 10240) {
+				console.log('[IN] master update');
 				
-				var sn = helper.getAttr(device, 'serialNumber');
-				var deviceId = helper.getAttr(device, 'deviceId');
-				if (sn && withStatus.indexOf(deviceId) != -1) {
-					var nameId = helper.getAttr(device, 'nameId');
-					actuators[sn] = {
-						serialNumber: sn,
-						deviceId: deviceId,
-						typeName: strings[nameId],
-						channels: {}
-					};
-					helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
-						var cn = helper.getAttr(channel, 'i');
-						if (cn) {
-							actuators[sn]['channels'][cn] = {
-								datapoints: {}
-							};
-							['inputs', 'outputs'].forEach(function (put) {
-								helper.getElements(channel, [put, 'dataPoint']).forEach(function (dataPoint) {
-									var dp = helper.getAttr(dataPoint, 'i');
-									if (dp) {
-										actuators[sn]['channels'][cn]['datapoints'][dp] = helper.getElementText(dataPoint, ['value']);
-									}
+				// valid XML is not necessary for all parsers, but it helps (and ltx is small and fast BECAUSE it doesn't accept shitty XML)
+				allDataText = allDataText.replace('<Channel selector OR>', '&lt;Channel selector OR&gt;');
+				allDataText = allDataText.replace('<Channel selector AND>', '&lt;Channel selector AND&gt;');
+				allDataText = allDataText.replace('<The following strings from F000 to FFFF are not to be translated!>', '&lt;The following strings from F000 to FFFF are not to be translated!&gt;');
+				var allData = ltx.parse(allDataText);
+			
+				// floors and rooms
+				helper.getElements(allData, ['entities', 'entity']).forEach(function (entity) {
+					var entityData = JSON.parse(entity.getText());
+					if (entity.attrs.type == 'floor' || entity.attrs.type == 'room') {
+						house[entity.attrs.type][entity.attrs.uid] = entityData.name;
+					}
+				});
+			
+				// strings
+				helper.getElements(allData, ['strings', 'string']).forEach(function (string) {
+					strings[string.attrs.nameId] = string.getText();
+				});
+			
+				// actuators
+				helper.getElements(allData, ['devices', 'device']).forEach(function (device) {
+				
+					var sn = helper.getAttr(device, 'serialNumber');
+					var deviceId = helper.getAttr(device, 'deviceId');
+					if (sn && withStatus.indexOf(deviceId) != -1) {
+						var nameId = helper.getAttr(device, 'nameId');
+						actuators[sn] = {
+							serialNumber: sn,
+							deviceId: deviceId,
+							typeName: strings[nameId],
+							channels: {}
+						};
+						helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+							var cn = helper.getAttr(channel, 'i');
+							if (cn) {
+								actuators[sn]['channels'][cn] = {
+									datapoints: {}
+								};
+								['inputs', 'outputs'].forEach(function (put) {
+									helper.getElements(channel, [put, 'dataPoint']).forEach(function (dataPoint) {
+										var dp = helper.getAttr(dataPoint, 'i');
+										if (dp) {
+											actuators[sn]['channels'][cn]['datapoints'][dp] = helper.getElementText(dataPoint, ['value']);
+										}
+									});
 								});
-							});
-						}
-					});
-				}
-				
-			});
-			
+							}
+						});
+					}
+				});
+			} else {
+				console.log('[IN] unknown string update:');
+				console.log(niceXML(stanza));
+			}
 		});
 	});
-	
-	console.log(house);
-	console.log(util.inspect(actuators, {showHidden: false, depth: null, colors: true}));
-	
 }
 
