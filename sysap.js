@@ -126,7 +126,7 @@ var niceXML = function (ltxIn) {
 }
 
 sysap.on('online', function() {
-	console.log('[online]');
+	console.log('[SYSAP] online');
 	
 	var talkToMe =  new xmpp_client.Element('presence', {
 		from: config.bosh.jid,
@@ -200,6 +200,7 @@ function updatePacket (stanza) {
 		var update = ltx.parse(helper.getElementText(item, ['update', 'data']));
 		
 		if (update) { 
+			console.log('[SYSAP] update');
 			helper.getElements(update, ['devices', 'device']).forEach(function (device) {
 				
 				// is a valid device and init is completed
@@ -247,12 +248,17 @@ function methodResponse (stanza) {
 		helper.getElements(param, ['value', 'boolean']).forEach(function (value) {
 			var result = value.getText();
 			if (result == 1) {
-				console.log('[IN] result update succes');
+				console.log('[SYSAP] result update succes');
 			} else if (result == 0) {
-				console.log('[IN] result update failure');
+				console.log('[SYSAP] result update failure');
 			} else {
-				console.log('[IN] result update unknown: ' + result);
+				console.log('[SYSAP] result update unknown: ' + result);
 			}
+		});
+		
+		helper.getElements(param, ['value', 'int']).forEach(function (value) {
+				console.log('[SYSAP] unknown int update:');
+				console.log(niceXML(stanza));
 		});
 		
 		helper.getElements(param, ['value', 'string']).forEach(function (value) {
@@ -260,7 +266,7 @@ function methodResponse (stanza) {
 			var allDataText = value.getText();
 
 			if (allDataText.length > 10240) {
-				console.log('[IN] master update');
+				console.log('[SYSAP] master update');
 				
 				// valid XML is not necessary for all parsers, but it helps (and ltx is small and fast BECAUSE it doesn't accept shitty XML)
 				allDataText = allDataText.replace('<Channel selector OR>', '&lt;Channel selector OR&gt;');
@@ -313,7 +319,7 @@ function methodResponse (stanza) {
 					}
 				});
 			} else {
-				console.log('[IN] unknown string update:');
+				console.log('[SYSAP] unknown string update:');
 				console.log(niceXML(stanza));
 			}
 		});
