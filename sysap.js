@@ -152,13 +152,10 @@ sysap.on('online', function() {
 });
 
 sysap.on('stanza', function(stanza) {
-
-/*	var rightNow = new Date();
-	console.log("\n\n"+rightNow.toISOString());*/
-	
 	
 	// UPDATE PACKET
-	if (stanza.attrs.type == 'headline' && 
+	if (stanza.getName() == 'message' &&
+		stanza.attrs.type == 'headline' && 
 		stanza.attrs.from == 'mrha@busch-jaeger.de' && 
 		helper.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
@@ -167,23 +164,53 @@ sysap.on('stanza', function(stanza) {
 	
 	
 	// MASTER STATUS UPDATE
-	} else if (stanza.attrs.type == 'result' && 
+	} else if (stanza.getName() == 'iq' &&
+			   stanza.attrs.type == 'result' && 
 			   stanza.attrs.from == 'mrha@busch-jaeger.de/rpc') {
 		
 		console.log('[IN] result packet');
 		methodResponse(stanza);
 	
 	
+	} else if (stanza.getName() == 'presence') {
+		console.log('[IN] presence');
+		presence(stanza);
+	
+	
 	// EVERYTHING ELSE
 	} else {
 		console.log('[IN] unknown stanza:');
-		console.log(niceXML(stanza));
+		console.log(pd.xml(stanza.toString()));
 	}
+	
 });
 
 sysap.on('error', function (e) {
 	console.log(e)
 });
+
+
+/**
+ * parses a presence packet and logs the info
+ * @param {Object} stanza - a node-xmpp-client xml data packet
+ */
+function presence (stanza) {
+	
+	var from = helper.getAttr(stanza, 'from');
+	
+	if (from) {
+		if (from == config.bosh.jid + '/' + config.bosh.resource) {
+			console.log('[SYSAP] myself present');
+		} else if (from == 'mrha@busch-jaeger.de/rpc') {
+			console.log('[SYSAP] sysap present');
+		} else {
+			console.log('[SYSAP] unknown user present: ' + from);
+		}
+	} else {
+		console.log('[SYSAP] unknown presence packet');
+	}
+	
+}
 
 
 /**
