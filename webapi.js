@@ -17,17 +17,15 @@ http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 	res.json(data);
 });
 
-http.get('/set/:command/:serialnumber/:channel/:action', function (req, res) {
-	var data = sysap.info();
-	sysap.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
-	console.log('[WEB] set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
-	res.send(req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
+http.get('/set/:type/:serialnumber/:channel/:action', function (req, res) {
+	console.log('[WEB] set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action);
+	var status = sysap.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action);
+	res.send(status);
 });
 
 http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
-	var data = sysap.info();
-	sysap.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	console.log('[WEB] raw set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
+	sysap.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	res.send(req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 });
 

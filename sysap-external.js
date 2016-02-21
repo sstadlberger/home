@@ -4,7 +4,91 @@ var info = function (what) {
 	return module.parent.exports.getData('actuators');
 };
 
-var set = function (sn, ch, dp, vl) {
+var parse = function (type, serialnumber, channel, action) {
+	var commands = {
+		switch : {
+			actions : {
+				on : { idp0000 : 1 },
+				off : { idp0000 : 0 }
+			},
+			deviceIds: [
+				'B002', // Schaltaktor 4-fach, 16A, REG
+				'100E' // Sensor/ Schaltaktor 2/1-fach
+			]
+		},
+		switchgroup : {
+			actions : {
+				on : { odp0002 : 1 },
+				off : { odp0002 : 0 }
+			}
+		},
+		dimmer : {
+			actions : {
+				on : { idp0000 : 1 },
+				off : { idp0000 : 0 },
+				up : { idp0001 : 9 }, // relative dimming: 9 means dimm up by 100%
+				down : { idp0001 : 1 }, // relative dimming: 9 means dimm down by 100%
+				stop : { idp0001 : 0 } // relative dimming: 0 means stop dimming action
+			},
+			deviceIds: [
+				'101C' // Dimmaktor 4-fach
+			]
+		},
+		shutter : {
+			actions : {
+				up : { idp0000 : 0 },
+				down : { idp0000 : 1 },
+				stop : { idp0001 : 1 }
+			},
+			deviceIds: [
+				'B001', // Jalousieaktor 4-fach, REG
+				'1013' // Sensor/ Jalousieaktor 1/1-fach
+			]
+		},
+		shuttergroup : {
+			actions : {
+				up : { odp0003 : 0 },
+				down : { odp0003 : 1 },
+				stop : { odp0004 : 1 }
+			}
+		},
+		scene : {
+			actions : {
+				set : { odp0000 : 1 }
+			}
+		},
+	}
+	var actuators = module.parent.exports.getData('actuators');
+	
+	// error checks
+	if (!commands[type]) {
+		console.log('[OUT] ERROR: unknown command: "' + type + '"');
+		return 'unknown command: "' + type + '"';
+	}
+	if (!commands[type].actions[action]) {
+		console.log('[OUT] ERROR: unknown action "' + action + '" for type "' + type + '"');
+		return 'unknown action "' + action + '" for type "' + type + '"';
+	}
+	if (!actuators[serialnumber]) {
+		console.log('[OUT] ERROR: actuator "' + serialnumber + '" not found');
+		return 'actuator "' + serialnumber + '" not found';
+	}
+	if (commands[type].deviceIds) {
+		// this check is only valid for "real" actuators, i.e. hardware devices to which an input value is directly send
+		// groups and scenes are virtual switches and send output datapoints over the bus
+		if (commands[type].deviceIds.indexOf(actuators[serialnumber].deviceId) == -1) {
+			console.log('[OUT] ERROR: actuator "' + serialnumber + '" (' + actuators[serialnumber].typeName + ') is not of type "' + type + '"');
+			return 'actuator "' + serialnumber + '" (' + actuators[serialnumber].typeName + ') is not of type "' + type + '"';
+		}
+	}
+	
+	var datapoint = Object.keys(commands[type].actions[action])[0];
+	var value = commands[type].actions[action][datapoint];
+	set(serialnumber, channel, datapoint, value);
+	return 'set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' (' + actuators[serialnumber].typeName + ') to ' + action + ': ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value;
+}
+
+var set = function (serialnumber, channel, datapoint, value) {
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',
 		to: 'mrha@busch-jaeger.de/rpc',
@@ -19,18 +103,19 @@ var set = function (sn, ch, dp, vl) {
 					.c('param', {})
 						.c('value', {})
 							.c('string', {})
-								.t(sn + '/' + ch + '/' + dp)
+								.t(serialnumber + '/' + channel + '/' + datapoint)
 								.up()
 							.up()
 						.up()
 					.c('param', {})
 						.c('value', {})
 							.c('string', {})
-								.t(vl);
+								.t(value);
 	
 	module.parent.exports.sysap.send(setData);
-	console.log('[OUT] set actuator: ' + sn + '/' + ch + '/' + dp + ': ' + vl);
+	console.log('[OUT] set actuator: ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value);
 }
 
 module.exports.info = info;
+module.exports.parse = parse;
 module.exports.set = set;
