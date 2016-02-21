@@ -33,4 +33,4 @@ var set = function (sn, ch, dp, vl) {
 }
 
 module.exports.info = info;
-module.exports.action = set;
+module.exports.set = set;
