@@ -17,6 +17,21 @@ http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 	res.json(data);
 });
 
+http.get('/legacy', function (req, res) {
+	// old format: bj.php?type=setSwitch&actuator=ABB26B081851&channel=2&command=on
+	var type = req.query.type.substring(3).toLowerCase();
+	var serialnumber = req.query.actuator;
+	var channel = 'ch000' + req.query.channel;
+	var action = req.query.command;
+	
+	console.log('[WEB] legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
+	var status = sysap.parse(type, serialnumber, channel, action);
+	
+	res.header('Access-Control-Allow-Origin', '*');
+	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+	res.send(status);
+});
+
 http.get('/set/:type/:serialnumber/:channel/:action', function (req, res) {
 	console.log('[WEB] set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action);
 	var status = sysap.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action);
