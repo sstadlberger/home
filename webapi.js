@@ -3,7 +3,7 @@ var http = express();
 var sysap = require('./sysap-external.js');
 
 http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
-	var data = sysap.info();
+	var data = sysap.info('actuators');
 	if (req.params.serialnumber && data[req.params.serialnumber]) {
 		data = data[req.params.serialnumber];
 		if (req.params.serialnumber && data.channels[req.params.channel]) {

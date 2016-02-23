@@ -89,6 +89,7 @@ var presence = function (stanza) {
  * parses an update packet and updates the master data structure
  * requires a pre-populated actuators object
  * @param {Object} stanza - a node-xmpp-client xml data packet
+ * @param {Object} data - the master data object
  */
 var update = function (stanza, data) {
 
@@ -139,6 +140,7 @@ var update = function (stanza, data) {
 /**
  * parses the master packet and creates the master data struchture
  * @param {Object} stanza - a node-xmpp-client xml data packet
+ * @param {Object} data - the master data object
  */
 var response = function (stanza, data) {
 	helper.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {

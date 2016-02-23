@@ -1,9 +1,23 @@
 var xmpp_client = require('node-xmpp-client');
 
+
+/**
+ * returns a part of the master data structure
+ * @param {string} what - valid values are house, actuators and strings for the respective sub-objects
+ * @returns {Object} requested part of the master data object
+ */
 var info = function (what) {
-	return module.parent.exports.getData('actuators');
+	return module.parent.exports.getData(what);
 };
 
+/**
+ * translates a human readable request into the actual knx commands and calls the "real" set-functions
+ * @param {string} type - what kind of actuator (switch, switchgroup, dimmer, shutter, shuttergroup & scene)
+ * @param {string} serialnumber - serial number of the actuator
+ * @param {string} channel - channel number of the actuator
+ * @param {string} action - what action should be performed (on, off, up, down, stop & set)
+ * @returns {string} either what action was performed or error message
+ */
 var parse = function (type, serialnumber, channel, action) {
 	var commands = {
 		switch : {
@@ -88,6 +102,13 @@ var parse = function (type, serialnumber, channel, action) {
 	return 'set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' (' + actuators[serialnumber].typeName + ') to ' + action + ': ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value;
 }
 
+/**
+ * sets a knx parameter via xmpp
+ * @param {string} serialnumber - serial number of the actuator
+ * @param {string} channel - channel number of the actuator
+ * @param {string} datapoint - datapoint of the actuator
+ * @param {string} value - the value to set the datapoint to
+ */
 var set = function (serialnumber, channel, datapoint, value) {
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',
