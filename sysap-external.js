@@ -1,4 +1,5 @@
 var xmpp_client = require('node-xmpp-client');
+var helper = require('./helper.js');
 
 
 /**
@@ -76,22 +77,22 @@ var parse = function (type, serialnumber, channel, action) {
 	
 	// error checks
 	if (!commands[type]) {
-		console.log('[OUT] ERROR: unknown command: "' + type + '"');
+		helper.log.error('parse unknown command: "' + type + '"');
 		return 'unknown command: "' + type + '"';
 	}
 	if (!commands[type].actions[action]) {
-		console.log('[OUT] ERROR: unknown action "' + action + '" for type "' + type + '"');
+		helper.log.error('parse unknown action "' + action + '" for type "' + type + '"');
 		return 'unknown action "' + action + '" for type "' + type + '"';
 	}
 	if (!actuators[serialnumber]) {
-		console.log('[OUT] ERROR: actuator "' + serialnumber + '" not found');
+		helper.log.error('parse actuator "' + serialnumber + '" not found');
 		return 'actuator "' + serialnumber + '" not found';
 	}
 	if (commands[type].deviceIds) {
 		// this check is only valid for "real" actuators, i.e. hardware devices to which an input value is directly send
 		// groups and scenes are virtual switches and send output datapoints over the bus
 		if (commands[type].deviceIds.indexOf(actuators[serialnumber].deviceId) == -1) {
-			console.log('[OUT] ERROR: actuator "' + serialnumber + '" (' + actuators[serialnumber].typeName + ') is not of type "' + type + '"');
+			helper.log.error('parse actuator "' + serialnumber + '" (' + actuators[serialnumber].typeName + ') is not of type "' + type + '"');
 			return 'actuator "' + serialnumber + '" (' + actuators[serialnumber].typeName + ') is not of type "' + type + '"';
 		}
 	}
@@ -134,7 +135,7 @@ var set = function (serialnumber, channel, datapoint, value) {
 								.t(value);
 	
 	module.parent.exports.sysap.send(setData);
-	console.log('[OUT] set actuator: ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value);
+	helper.log.debug('set actuator: ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value);
 }
 
 module.exports.info = info;

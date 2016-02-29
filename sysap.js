@@ -24,7 +24,7 @@ var sysap = new xmpp_client({
 });
 
 sysap.on('online', function() {
-	console.log('[SYSAP] online');
+	helper.log.info('sysap online');
 	
 	var talkToMe =  new xmpp_client.Element('presence', {
 		from: config.bosh.jid,
@@ -44,7 +44,7 @@ sysap.on('online', function() {
 		});
 	sysap.send(talkToMe2);
 	
-	console.log('[OUT] subscribe');
+	helper.log.debug('request subscribe');
 	
 	sysap_internal.all();
 });
@@ -57,7 +57,7 @@ sysap.on('stanza', function(stanza) {
 		stanza.attrs.from == 'mrha@busch-jaeger.de' && 
 		helper.ltx.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
-		console.log('[IN] update packet');
+		helper.log.debug('update packet received');
 		sysap_internal.update(stanza, data);
 	
 	
@@ -66,25 +66,27 @@ sysap.on('stanza', function(stanza) {
 			   stanza.attrs.type == 'result' && 
 			   stanza.attrs.from == 'mrha@busch-jaeger.de/rpc') {
 		
-		console.log('[IN] result packet');
+		helper.log.debug('result packet received');
 		sysap_internal.response(stanza, data);
 	
 	
 	} else if (stanza.getName() == 'presence') {
-		console.log('[IN] presence');
+		helper.log.debug('presence packet received');
 		sysap_internal.presence(stanza);
 	
 	
 	// EVERYTHING ELSE
 	} else {
-		console.log('[IN] unknown stanza:');
-		console.log(stanza.toString());
+		helper.log.warn('unknown stanza');
 	}
+	
+	helper.log.trace(stanza.toString());
 	
 });
 
 sysap.on('error', function (e) {
-	console.log(e)
+	helper.log.error('sysap error:');
+	helper.log.error(e);
 });
 
 Object.assign(module.exports, { getData : function (what) { return data[what]; } });

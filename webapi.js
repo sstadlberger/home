@@ -1,6 +1,7 @@
 var express = require('express');
 var http = express();
 var sysap = require('./sysap-external.js');
+var helper = require('./helper.js');
 
 http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 	var data = sysap.info('actuators');
@@ -13,7 +14,7 @@ http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 			}
 		}
 	}
-	console.log('[WEB] get info');
+	helper.log.debug('web get info call');
 	res.json(data);
 });
 
@@ -24,7 +25,7 @@ http.get('/legacy', function (req, res) {
 	var channel = 'ch000' + req.query.channel;
 	var action = req.query.command;
 	
-	console.log('[WEB] legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
+	helper.log.debug('web legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
 	var status = sysap.parse(type, serialnumber, channel, action);
 	
 	res.header('Access-Control-Allow-Origin', '*');
@@ -33,17 +34,17 @@ http.get('/legacy', function (req, res) {
 });
 
 http.get('/set/:type/:serialnumber/:channel/:action', function (req, res) {
-	console.log('[WEB] set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action);
+	helper.log.debug('web set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action);
 	var status = sysap.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action);
 	res.send(status);
 });
 
 http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
-	console.log('[WEB] raw set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
+	helper.log.debug('web raw set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 	sysap.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	res.send(req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 });
 
 http.listen(8080, function () {
-  console.log('[WEB] http api loaded');
+  helper.log.info('http api loaded');
 });

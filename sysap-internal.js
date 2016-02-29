@@ -46,7 +46,7 @@ var all = function () {
 								.t('0');
 	
 	module.parent.exports.sysap.send(allData);
-	console.log('[OUT] get master update');
+	helper.log.debug('request master update');
 }
 
 /**
@@ -59,14 +59,15 @@ var presence = function (stanza) {
 	
 	if (from) {
 		if (from == config.bosh.jid + '/' + config.bosh.resource) {
-			console.log('[SYSAP] myself present');
+			helper.log.debug('myself present');
 		} else if (from == 'mrha@busch-jaeger.de/rpc') {
-			console.log('[SYSAP] sysap present');
+			helper.log.debug('sysap present');
 		} else {
-			console.log('[SYSAP] unknown user present: ' + from);
+			helper.log.info('sysap unknown user present: ' + from);
 		}
 	} else {
-		console.log('[SYSAP] unknown presence packet');
+		helper.log.warn('unknown presence packet');
+		helper.log.trace(stanza.toString());
 	}
 	
 }
@@ -86,7 +87,7 @@ var update = function (stanza, data) {
 		var update = ltx.parse(helper.ltx.getElementText(item, ['update', 'data']));
 		
 		if (update) { 
-			console.log('[SYSAP] update');
+			helper.log.debug('valid update paket');
 			helper.ltx.getElements(update, ['devices', 'device']).forEach(function (device) {
 				
 				// is a valid device and init is completed
@@ -134,17 +135,18 @@ var response = function (stanza, data) {
 		helper.ltx.getElements(param, ['value', 'boolean']).forEach(function (value) {
 			var result = value.getText();
 			if (result == 1) {
-				console.log('[SYSAP] result update succes');
+				helper.log.debug('result update succes');
 			} else if (result == 0) {
-				console.log('[SYSAP] result update failure');
+				helper.log.warn('result update failure');
 			} else {
-				console.log('[SYSAP] result update unknown: ' + result);
+				helper.log.warn('result update unknown');
+				helper.log.trace(result);
 			}
 		});
 		
 		helper.ltx.getElements(param, ['value', 'int']).forEach(function (value) {
-				console.log('[SYSAP] unknown int update:');
-				console.log(stanza.toString());
+				helper.log.warn('unknown int update');
+				helper.log.trace(stanza.toString());
 		});
 		
 		helper.ltx.getElements(param, ['value', 'string']).forEach(function (value) {
@@ -204,10 +206,10 @@ var response = function (stanza, data) {
 					}
 				});
 				
-				console.log('[SYSAP] master update complete');
+				helper.log.info('master update complete');
 			} else {
-				console.log('[SYSAP] unknown string update:');
-				console.log(stanza.toString());
+				helper.log.warn('unknown string update');
+				helper.log.trace(stanza.toString());
 			}
 		});
 	});
