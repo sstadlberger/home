@@ -5,20 +5,6 @@ var config = require('./config.js');
 
 
 /**
- * only include devices in the data structure that have useful state
- * this list may be incomplete, as I don't have every device
- * 1013: Sensor/ Jalousieaktor 1/1-fach
- * 9004: Raumtemperaturregler
- * 100E: Sensor/ Schaltaktor 2/1-fach
- * 101C: Dimmaktor 4-fach
- * B002: Schaltaktor 4-fach, 16A, REG
- * B003: Heizungsaktor 6-fach, REG
- * B001: Jalousieaktor 4-fach, REG
- */
-var withStatus = ['1013', '9004', '100E', '101C', 'B002', 'B003', 'B001'];
-
-
-/**
  * construct and sends a request for the master update
  */
 var all = function () {
@@ -166,7 +152,6 @@ var response = function (stanza, data) {
 			var allDataText = value.getText();
 
 			if (allDataText.length > 10240) {
-				console.log('[SYSAP] master update');
 				
 				// valid XML is not necessary for all parsers, but it helps (and ltx is small and fast BECAUSE it doesn't accept shitty XML)
 				allDataText = allDataText.replace('<Channel selector OR>', '&lt;Channel selector OR&gt;');
@@ -192,7 +177,7 @@ var response = function (stanza, data) {
 				
 					var sn = helper.getAttr(device, 'serialNumber');
 					var deviceId = helper.getAttr(device, 'deviceId');
-					if (sn && withStatus.indexOf(deviceId) != -1) {
+					if (sn) {
 						var nameId = helper.getAttr(device, 'nameId');
 						data.actuators[sn] = {
 							serialNumber: sn,
@@ -218,6 +203,8 @@ var response = function (stanza, data) {
 						});
 					}
 				});
+				
+				console.log('[SYSAP] master update complete');
 			} else {
 				console.log('[SYSAP] unknown string update:');
 				console.log(stanza.toString());
