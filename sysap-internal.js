@@ -1,6 +1,6 @@
 var xmpp_client = require('node-xmpp-client');
 var ltx = require('ltx');
-var helper = require('./ltxhelper.js');
+var helper = require('./helper.js');
 var config = require('./config.js');
 
 
@@ -55,7 +55,7 @@ var all = function () {
  */
 var presence = function (stanza) {
 	
-	var from = helper.getAttr(stanza, 'from');
+	var from = helper.ltx.getAttr(stanza, 'from');
 	
 	if (from) {
 		if (from == config.bosh.jid + '/' + config.bosh.resource) {
@@ -79,26 +79,26 @@ var presence = function (stanza) {
  */
 var update = function (stanza, data) {
 
-	helper.getElements(stanza, ['event', 'items', 'item']).forEach(function (item) {
+	helper.ltx.getElements(stanza, ['event', 'items', 'item']).forEach(function (item) {
 		
 		// parse payload
 		// no XML verification, let's hope that Busch Jäger produces writes valid XML in this case
-		var update = ltx.parse(helper.getElementText(item, ['update', 'data']));
+		var update = ltx.parse(helper.ltx.getElementText(item, ['update', 'data']));
 		
 		if (update) { 
 			console.log('[SYSAP] update');
-			helper.getElements(update, ['devices', 'device']).forEach(function (device) {
+			helper.ltx.getElements(update, ['devices', 'device']).forEach(function (device) {
 				
 				// is a valid device and init is completed
-				var sn = helper.getAttr(device, 'serialNumber');
+				var sn = helper.ltx.getAttr(device, 'serialNumber');
 				if (sn && sn != '' && data.actuators[sn]) {
 				
 					// valid update packet that is of interest
-					if (helper.getAttr(device, 'commissioningState') == 'ready') {
+					if (helper.ltx.getAttr(device, 'commissioningState') == 'ready') {
 						
 						// iterate over all channels and datapoints
-						helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
-							var cn = helper.getAttr(channel, 'i');
+						helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+							var cn = helper.ltx.getAttr(channel, 'i');
 							if (cn) {
 								channel.children.forEach(function (dp) {
 									if (!data.actuators[sn]['channels'][cn]) {
@@ -107,8 +107,8 @@ var update = function (stanza, data) {
 										};
 									}
 									dp.getChildren('dataPoint').forEach(function (datapoint) {
-										var pt = helper.getAttr(datapoint, 'i');
-										var vl = helper.getElementText(datapoint, ['value']);
+										var pt = helper.ltx.getAttr(datapoint, 'i');
+										var vl = helper.ltx.getElementText(datapoint, ['value']);
 										if (pt && vl) {
 											data.actuators[sn].channels[cn].datapoints[pt] = vl;
 										}
@@ -129,9 +129,9 @@ var update = function (stanza, data) {
  * @param {Object} data - the master data object
  */
 var response = function (stanza, data) {
-	helper.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
+	helper.ltx.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
 		
-		helper.getElements(param, ['value', 'boolean']).forEach(function (value) {
+		helper.ltx.getElements(param, ['value', 'boolean']).forEach(function (value) {
 			var result = value.getText();
 			if (result == 1) {
 				console.log('[SYSAP] result update succes');
@@ -142,12 +142,12 @@ var response = function (stanza, data) {
 			}
 		});
 		
-		helper.getElements(param, ['value', 'int']).forEach(function (value) {
+		helper.ltx.getElements(param, ['value', 'int']).forEach(function (value) {
 				console.log('[SYSAP] unknown int update:');
 				console.log(stanza.toString());
 		});
 		
-		helper.getElements(param, ['value', 'string']).forEach(function (value) {
+		helper.ltx.getElements(param, ['value', 'string']).forEach(function (value) {
 			
 			var allDataText = value.getText();
 
@@ -160,7 +160,7 @@ var response = function (stanza, data) {
 				var allData = ltx.parse(allDataText);
 			
 				// floors and rooms
-				helper.getElements(allData, ['entities', 'entity']).forEach(function (entity) {
+				helper.ltx.getElements(allData, ['entities', 'entity']).forEach(function (entity) {
 					var entityData = JSON.parse(entity.getText());
 					if (entity.attrs.type == 'floor' || entity.attrs.type == 'room') {
 						data.house[entity.attrs.type][entity.attrs.uid] = entityData.name;
@@ -168,34 +168,34 @@ var response = function (stanza, data) {
 				});
 			
 				// strings
-				helper.getElements(allData, ['strings', 'string']).forEach(function (string) {
+				helper.ltx.getElements(allData, ['strings', 'string']).forEach(function (string) {
 					data.strings[string.attrs.nameId] = string.getText();
 				});
 			
 				// actuators
-				helper.getElements(allData, ['devices', 'device']).forEach(function (device) {
+				helper.ltx.getElements(allData, ['devices', 'device']).forEach(function (device) {
 				
-					var sn = helper.getAttr(device, 'serialNumber');
-					var deviceId = helper.getAttr(device, 'deviceId');
+					var sn = helper.ltx.getAttr(device, 'serialNumber');
+					var deviceId = helper.ltx.getAttr(device, 'deviceId');
 					if (sn) {
-						var nameId = helper.getAttr(device, 'nameId');
+						var nameId = helper.ltx.getAttr(device, 'nameId');
 						data.actuators[sn] = {
 							serialNumber: sn,
 							deviceId: deviceId,
 							typeName: data.strings[nameId],
 							channels: {}
 						};
-						helper.getElements(device, ['channels', 'channel']).forEach(function (channel) {
-							var cn = helper.getAttr(channel, 'i');
+						helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+							var cn = helper.ltx.getAttr(channel, 'i');
 							if (cn) {
 								data.actuators[sn]['channels'][cn] = {
 									datapoints: {}
 								};
 								['inputs', 'outputs'].forEach(function (put) {
-									helper.getElements(channel, [put, 'dataPoint']).forEach(function (dataPoint) {
-										var dp = helper.getAttr(dataPoint, 'i');
+									helper.ltx.getElements(channel, [put, 'dataPoint']).forEach(function (dataPoint) {
+										var dp = helper.ltx.getAttr(dataPoint, 'i');
 										if (dp) {
-											data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.getElementText(dataPoint, ['value']);
+											data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
 										}
 									});
 								});

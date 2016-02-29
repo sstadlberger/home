@@ -1,6 +1,6 @@
 var xmpp_client = require('node-xmpp-client');
 var config = require('./config.js');
-var helper = require('./ltxhelper.js');
+var helper = require('./helper.js');
 var sysap_external = require('./sysap-external.js');
 var sysap_internal = require('./sysap-internal.js');
 
@@ -55,7 +55,7 @@ sysap.on('stanza', function(stanza) {
 	if (stanza.getName() == 'message' &&
 		stanza.attrs.type == 'headline' && 
 		stanza.attrs.from == 'mrha@busch-jaeger.de' && 
-		helper.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
+		helper.ltx.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
 		console.log('[IN] update packet');
 		sysap_internal.update(stanza, data);

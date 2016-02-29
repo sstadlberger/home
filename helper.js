@@ -1,6 +1,6 @@
-var helper = {};
+var ltx = {};
 
-helper.getElement = function (element, path) {
+ltx.getElement = function (element, path) {
 	var current = path.shift();
 	var result = element.getChild(current);
 	if (result && path.length > 0) {
@@ -9,7 +9,7 @@ helper.getElement = function (element, path) {
 	return result;
 }
 
-helper.getElements = function (element, path) {
+ltx.getElements = function (element, path) {
 	var result;
 	var current = path.shift();
 	
@@ -28,7 +28,7 @@ helper.getElements = function (element, path) {
 	return result;
 }
 
-helper.getAttr = function (object, attribute) {
+ltx.getAttr = function (object, attribute) {
 	var result;
 	if (object && object.attrs && object.attrs[attribute]) {
 		result = object.attrs[attribute];
@@ -36,11 +36,11 @@ helper.getAttr = function (object, attribute) {
 	return result;
 }
 
-helper.getElementAttr = function (element, path, attribute) {
+ltx.getElementAttr = function (element, path, attribute) {
 	return this.getAttr(this.getElement(element, path), attribute);
 }
 
-helper.getText = function (object) {
+ltx.getText = function (object) {
 	var result;
 	if (object && object.text()) {
 		result = object.text();
@@ -48,8 +48,8 @@ helper.getText = function (object) {
 	return result;
 }
 
-helper.getElementText = function (element, path) {
+ltx.getElementText = function (element, path) {
 	return this.getText(this.getElement(element, path));
 }
 
-module.exports = helper;
+module.exports.ltx = ltx;
