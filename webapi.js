@@ -1,13 +1,16 @@
 var express = require('express');
+var cors = require('cors');
 var http = express();
 var sysap = require('./sysap-external.js');
 var helper = require('./helper.js');
+
+http.use(cors());
 
 http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 	var data = sysap.info('actuators');
 	if (req.params.serialnumber && data[req.params.serialnumber]) {
 		data = data[req.params.serialnumber];
-		if (req.params.serialnumber && data.channels[req.params.channel]) {
+		if (req.params.channel && data.channels[req.params.channel]) {
 			data = data.channels[req.params.channel];
 			if (req.params.datapoint && data.datapoints[req.params.datapoint]) {
 				data = data.datapoints[req.params.datapoint];
@@ -15,6 +18,18 @@ http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 		}
 	}
 	helper.log.debug('web get info call');
+	res.json(data);
+});
+
+http.get('/structure/:mode?/:floor*?', function (req, res) {
+	var data = sysap.info('external');
+	if (req.params.mode && data[req.params.mode]) {
+		data = data[req.params.mode];
+		if (req.params.floor && data[req.params.floor]) {
+			data = data[req.params.floor];
+		}
+	}
+	helper.log.debug('web get external call');
 	res.json(data);
 });
 

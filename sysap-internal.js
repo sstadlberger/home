@@ -215,8 +215,46 @@ var response = function (stanza, data) {
 	});
 }
 
+/**
+ * converts the master data object into bite-sized parts that are structured
+ * for the front-end
+ * @param {Object} data - the master data object
+ * @param {Object} structure - the data structure of the front-end
+ * @param {Object} external - response-ready data structure for front-end
+ */
+var structure = function (data, structure) {
+	for (var mode = 0; mode < structure.length; mode++) {
+		if (structure[mode].floors) {
+			for (var floor = 0; floor < structure[mode].floors.length; floor++) {
+				if (structure[mode].floors[floor].buttons) {
+					for (var button = 0; button < structure[mode].floors[floor].buttons.length; button++) {
+						var status = structure[mode].floors[floor].buttons[button].status;
+						if (!data.external[mode]) {
+							data.external[mode] = [];
+						}
+						if (!data.external[mode][floor]) {
+							data.external[mode][floor] = {};
+						}
+						// waiting for full destructuring support
+						// currently only available with --harmony_destructuring (2016-03-26)
+						// var [sn, ch, dp] = status.split('/');
+						var parts = status.split('/');
+						var sn = parts[0];
+						var ch = parts[1];
+						var dp = parts[2];
+						if (data.actuators[sn] && data.actuators[sn].channels[ch] && data.actuators[sn].channels[ch].datapoints[dp] != undefined) {
+							data.external[mode][floor][status] = data.actuators[sn].channels[ch].datapoints[dp];
+						}
+					}
+				}
+			}
+		}
+	}
+	helper.log.debug('structure for interface updated');
+}
 
 module.exports.all = all;
 module.exports.presence = presence;
 module.exports.update = update;
 module.exports.response = response;
+module.exports.structure = structure;

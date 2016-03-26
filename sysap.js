@@ -11,8 +11,10 @@ var data = {
 		room : {}
 	},
 	actuators : {},
-	strings : {}
+	strings : {},
+	external : [[{}]]
 };
+var structure = require('./structure.json');
 
 var sysap = new xmpp_client({
 	bosh: {
@@ -59,6 +61,7 @@ sysap.on('stanza', function(stanza) {
 		
 		helper.log.debug('update packet received');
 		sysap_internal.update(stanza, data);
+		sysap_internal.structure(data, structure);
 	
 	
 	// MASTER STATUS UPDATE
@@ -68,6 +71,7 @@ sysap.on('stanza', function(stanza) {
 		
 		helper.log.debug('result packet received');
 		sysap_internal.response(stanza, data);
+		sysap_internal.structure(data, structure);
 	
 	
 	} else if (stanza.getName() == 'presence') {
