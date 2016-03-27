@@ -4,6 +4,7 @@ var helper = require('./helper.js');
 var config = require('./config.js');
 var websocket = require('./socketapi.js');
 var sysap = require('./sysap.js');
+var fs = require('fs');
 
 
 // see also var commands in sysap-external.js:parse()
@@ -273,7 +274,7 @@ var status = function (data) {
 
 var updateStructure = function (broadcast) {
 	var actuators = sysap.getData('actuators');
-	var loadedStructure = require('./structure.json');
+	var loadedStructure = JSON.parse(fs.readFileSync('./structure.json', 'utf8'));
 	var structure = [];
 	for (var mode = 0; mode < loadedStructure.length; mode++) {
 		structure[mode] = {};
