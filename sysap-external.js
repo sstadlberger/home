@@ -24,7 +24,8 @@ var parse = function (type, serialnumber, channel, action) {
 		switch : {
 			actions : {
 				on : { idp0000 : 1 },
-				off : { idp0000 : 0 }
+				off : { idp0000 : 0 },
+				toggle : { idp0000 : 'x' }
 			},
 			deviceIds: [
 				'B002', // Schaltaktor 4-fach, 16A, REG
@@ -34,13 +35,15 @@ var parse = function (type, serialnumber, channel, action) {
 		switchgroup : {
 			actions : {
 				on : { odp0002 : 1 },
-				off : { odp0002 : 0 }
+				off : { odp0002 : 0 },
+				toggle : { odp0002 : 'x' }
 			}
 		},
 		dimmer : {
 			actions : {
 				on : { idp0000 : 1 },
 				off : { idp0000 : 0 },
+				toggle : { idp0000 : 'x' },
 				up : { idp0001 : 9 }, // relative dimming: 9 means dimm up by 100%
 				down : { idp0001 : 1 }, // relative dimming: 9 means dimm down by 100%
 				stop : { idp0001 : 0 } // relative dimming: 0 means stop dimming action
@@ -73,7 +76,7 @@ var parse = function (type, serialnumber, channel, action) {
 			}
 		},
 	}
-	var actuators = module.parent.exports.getData('actuators');
+	var actuators = info('actuators');
 	
 	// error checks
 	if (!commands[type]) {
@@ -111,6 +114,11 @@ var parse = function (type, serialnumber, channel, action) {
  * @param {string} value - the value to set the datapoint to
  */
 var set = function (serialnumber, channel, datapoint, value) {
+	if (value == 'x') {
+		var data = info('actuators');
+		var current = data[serialnumber].channels[channel].datapoints[datapoint];
+		value = current == 1 ? 0 : 1;
+	}
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',
 		to: 'mrha@busch-jaeger.de/rpc',

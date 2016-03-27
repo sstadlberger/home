@@ -61,5 +61,5 @@ http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 });
 
 http.listen(8080, function () {
-  helper.log.info('http api loaded');
+	helper.log.info('http api loaded');
 });
