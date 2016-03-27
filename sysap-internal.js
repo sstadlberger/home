@@ -2,7 +2,18 @@ var xmpp_client = require('node-xmpp-client');
 var ltx = require('ltx');
 var helper = require('./helper.js');
 var config = require('./config.js');
+var websocket = require('./socketapi.js');
+var sysap = require('./sysap.js');
 
+
+// see also var commands in sysap-external.js:parse()
+var deviceTypes = {
+	'B002': 'switch',
+	'100E': 'switch',
+	'101C': 'dimmer',
+	'B001': 'shutter',
+	'1013': 'shutter'
+};
 
 /**
  * construct and sends a request for the master update
@@ -45,7 +56,7 @@ var all = function () {
 							.c('int', {})
 								.t('0');
 	
-	module.parent.exports.sysap.send(allData);
+	sysap.sysap.send(allData);
 	helper.log.debug('request master update');
 }
 
@@ -206,6 +217,7 @@ var response = function (stanza, data) {
 					}
 				});
 				
+				updateStructure(true);
 				helper.log.info('master update complete');
 			} else {
 				helper.log.warn('unknown string update');
@@ -220,41 +232,90 @@ var response = function (stanza, data) {
  * for the front-end
  * @param {Object} data - the master data object
  * @param {Object} structure - the data structure of the front-end
- * @param {Object} external - response-ready data structure for front-end
  */
-var structure = function (data, structure) {
-	for (var mode = 0; mode < structure.length; mode++) {
-		if (structure[mode].floors) {
-			for (var floor = 0; floor < structure[mode].floors.length; floor++) {
-				if (structure[mode].floors[floor].buttons) {
-					for (var button = 0; button < structure[mode].floors[floor].buttons.length; button++) {
-						var status = structure[mode].floors[floor].buttons[button].status;
-						if (!data.external[mode]) {
-							data.external[mode] = [];
-						}
-						if (!data.external[mode][floor]) {
-							data.external[mode][floor] = {};
-						}
-						// waiting for full destructuring support
-						// currently only available with --harmony_destructuring (2016-03-26)
-						// var [sn, ch, dp] = status.split('/');
-						var parts = status.split('/');
-						var sn = parts[0];
-						var ch = parts[1];
-						var dp = parts[2];
-						if (data.actuators[sn] && data.actuators[sn].channels[ch] && data.actuators[sn].channels[ch].datapoints[dp] != undefined) {
-							data.external[mode][floor][status] = data.actuators[sn].channels[ch].datapoints[dp];
+var status = function (data) {
+	var lookWhere = {
+		'switch': {
+			'dp': 'odp0000',
+			'normalize': function (input) { return input; }
+		},
+		'dimmer': {
+			'dp': 'odp0001',
+			'normalize': function (input) {	return (input / 100); }
+		}
+	};
+	data.status = [];
+	for (var mode = 0; mode < data.structure.length; mode++) {
+		data.status[mode] = [];
+		if (data.structure[mode].floors) {
+			for (var floor = 0; floor < data.structure[mode].floors.length; floor++) {
+				data.status[mode][floor] = {};
+				if (data.structure[mode].floors[floor].buttons) {
+					for (var button = 0; button < data.structure[mode].floors[floor].buttons.length; button++) {
+						var buttonData = data.structure[mode].floors[floor].buttons[button];
+						var sn = buttonData.sn;
+						var cn = buttonData.cn;
+						if (data.actuators[sn]) {
+							var dp = lookWhere[deviceTypes[data.actuators[sn].deviceId]].dp;
+							if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
+								var value = lookWhere[deviceTypes[data.actuators[sn].deviceId]].normalize(data.actuators[sn].channels[cn].datapoints[dp]);
+								data.status[mode][floor][sn + '/' + cn] = value;
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-	helper.log.debug('structure for interface updated');
+	helper.log.debug('status for interface updated');
+	websocket.broadcast(JSON.stringify({'status': data.status}));
+}
+
+var updateStructure = function (broadcast) {
+	var actuators = sysap.getData('actuators');
+	var loadedStructure = require('./structure.json');
+	var structure = [];
+	for (var mode = 0; mode < loadedStructure.length; mode++) {
+		structure[mode] = {};
+		structure[mode].icon =  loadedStructure[mode].icon;
+		structure[mode].iconActive = loadedStructure[mode].iconActive;
+		structure[mode].floors = [];
+		if (loadedStructure[mode].floors) {
+			for (var floor = 0; floor < loadedStructure[mode].floors.length; floor++) {
+				var currentFloor = loadedStructure[mode].floors[floor];
+				structure[mode].floors[floor] = {};
+				structure[mode].floors[floor].name = currentFloor.name;
+				structure[mode].floors[floor].content = currentFloor.content;
+				structure[mode].floors[floor].background = currentFloor.background;
+				structure[mode].floors[floor].buttons = [];
+				if (loadedStructure[mode].floors[floor].buttons) {
+					for (var button = 0; button < loadedStructure[mode].floors[floor].buttons.length; button++) {
+						var currentButton = loadedStructure[mode].floors[floor].buttons[button];
+						if (actuators[currentButton.serialnumber]) {
+							structure[mode].floors[floor].buttons[button] = {};
+							structure[mode].floors[floor].buttons[button].x = currentButton.x;
+							structure[mode].floors[floor].buttons[button].y = currentButton.y;
+							structure[mode].floors[floor].buttons[button].iconOn = currentButton.iconOn;
+							structure[mode].floors[floor].buttons[button].iconOff = currentButton.iconOff;
+							structure[mode].floors[floor].buttons[button].sn = currentButton.serialnumber;
+							structure[mode].floors[floor].buttons[button].cn = currentButton.channel;
+							structure[mode].floors[floor].buttons[button].type = deviceTypes[actuators[currentButton.serialnumber].deviceId];
+						}
+					}
+				}
+			}
+		}
+	}
+	helper.log.info('structure for interface updated');
+	sysap.setStructure(structure);
+	if (broadcast) {
+		websocket.broadcast(JSON.stringify({'structure': structure}));
+	}
 }
 
 module.exports.all = all;
 module.exports.presence = presence;
 module.exports.update = update;
 module.exports.response = response;
-module.exports.structure = structure;
+module.exports.status = status;
+module.exports.updateStructure = updateStructure;

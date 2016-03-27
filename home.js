@@ -1,5 +1,6 @@
 var sysap = require('./sysap.js');
 var webapi = require('./webapi.js');
+var socketapi = require('./socketapi.js');
 var helper = require('./helper.js');
 
 var argv = require('minimist')(process.argv.slice(2));

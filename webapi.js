@@ -1,13 +1,13 @@
 var express = require('express');
 var cors = require('cors');
 var http = express();
-var sysap = require('./sysap-external.js');
+var sysap_external = require('./sysap-external.js');
 var helper = require('./helper.js');
 
 http.use(cors());
 
 http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
-	var data = sysap.info('actuators');
+	var data = sysap_external.info('actuators');
 	if (req.params.serialnumber && data[req.params.serialnumber]) {
 		data = data[req.params.serialnumber];
 		if (req.params.channel && data.channels[req.params.channel]) {
@@ -22,7 +22,7 @@ http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 });
 
 http.get('/structure/:mode?/:floor*?', function (req, res) {
-	var data = sysap.info('external');
+	var data = sysap_external.info('external');
 	if (req.params.mode && data[req.params.mode]) {
 		data = data[req.params.mode];
 		if (req.params.floor && data[req.params.floor]) {
@@ -41,7 +41,7 @@ http.get('/legacy', function (req, res) {
 	var action = req.query.command;
 	
 	helper.log.debug('web legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
-	var status = sysap.parse(type, serialnumber, channel, action);
+	var status = sysap_external.parse(type, serialnumber, channel, action);
 	
 	res.header('Access-Control-Allow-Origin', '*');
 	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -50,13 +50,13 @@ http.get('/legacy', function (req, res) {
 
 http.get('/set/:type/:serialnumber/:channel/:action', function (req, res) {
 	helper.log.debug('web set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action);
-	var status = sysap.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action);
+	var status = sysap_external.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action);
 	res.send(status);
 });
 
 http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 	helper.log.debug('web raw set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
-	sysap.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
+	sysap_external.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	res.send(req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 });
 

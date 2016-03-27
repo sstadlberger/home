@@ -1,5 +1,7 @@
 var xmpp_client = require('node-xmpp-client');
 var helper = require('./helper.js');
+var sysap_internal = require('./sysap-internal.js');
+var sysap = require('./sysap.js');
 
 
 /**
@@ -8,7 +10,7 @@ var helper = require('./helper.js');
  * @returns {Object} requested part of the master data object
  */
 var info = function (what) {
-	return module.parent.exports.getData(what);
+	return sysap.getData(what);
 };
 
 /**
@@ -142,10 +144,15 @@ var set = function (serialnumber, channel, datapoint, value) {
 							.c('string', {})
 								.t(value);
 	
-	module.parent.exports.sysap.send(setData);
+	sysap.sysap.send(setData);
 	helper.log.debug('set actuator: ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value);
+}
+
+var updateStructure = function (broadcast) {
+	sysap_internal.updateStructure(broadcast);
 }
 
 module.exports.info = info;
 module.exports.parse = parse;
 module.exports.set = set;
+module.exports.updateStructure = updateStructure;
