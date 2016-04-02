@@ -20,12 +20,18 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 		helper.log.info('websocket closed');
 	});
 	conn.on('error', function (err) {
-		if (err.code == 'ECONNRESET') {
-			// i.e., the browser window was just closed
-			helper.log.error('client has exited ungracefully');
-		} else {
-			helper.log.error(err.code);
-			throw err;
+		switch (err) {
+			// most of these errors are cause by a sudden client disconnect
+			// e.g. closing the browser window
+			case: 'ECONNRESET':
+				helper.log.error('client has exited ungracefully (ECONNRESET)');
+				break;
+			case: 'EHOSTUNREACH':
+				helper.log.error('where has the client gone? (EHOSTUNREACH)');
+				break;
+			default:
+				helper.log.error(err.code);
+				throw err;
 		}
 	})
 }).listen(8001);
