@@ -3,7 +3,7 @@ var sysap_external = require('./sysap-external.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
-var valid = ['set', 'info', 'structure', 'raw', 'status', 'update'];
+var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel'];
 
 var socket = nodejsWebsocket.createServer(function (conn) {
 	helper.log.info('websocket started');
@@ -12,8 +12,8 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 		if (valid.indexOf(parts[0]) != -1) {
 			set(parts, conn);
 		} else {
-			conn.sendText(JSON.stringify({'error': 'invaild command: ' + parts[0] + ' (' + str + ')'}));
-			helper.log.debug('invaild websocket command: ' + parts[0] + ' (' + str + ')');
+			conn.sendText(JSON.stringify({'error': 'invalid command: ' + parts[0] + ' (' + str + ')'}));
+			helper.log.debug('invalid websocket command: ' + parts[0] + ' (' + str + ')');
 		}
 	});
 	conn.on('close', function (code, reason) {
@@ -44,8 +44,8 @@ function set (data, conn) {
 				var status = sysap_external.parse(data[0], data[1], data[2], data[3]);
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
-				conn.sendText(JSON.stringify({'error': 'invaild websocket set command: ' + data.join('/')}));
-				helper.log.debug('invaild set command: ' + data.join('/'));
+				conn.sendText(JSON.stringify({'error': 'invalid websocket set command: ' + data.join('/')}));
+				helper.log.error('invalid set command: ' + data.join('/'));
 			}
         	break;
         
@@ -63,7 +63,25 @@ function set (data, conn) {
         	sysap_external.updateStructure(true);
         	conn.sendText(JSON.stringify({'result': 'pushed update'}));
         	break;
-        
+        	
+        case 'loglevel':
+        	if (data.length == 1) {
+        		var newLoglevel = data[0];
+        		var valid = Object.keys(helper.log.loglevel);
+        		if (valid.indexOf(newLoglevel) == -1) {
+					conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + newLoglevel}));
+					helper.log.error('invalid loglevel command: ' + newLoglevel);
+				} else {
+					global.loglevel = helper.log.loglevel[newLoglevel];
+					conn.sendText(JSON.stringify({'result': 'loglevel set to ' + newLoglevel}));
+					helper.log.info('loglevel set to ' + newLoglevel);
+				}
+			} else {
+				conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + data.join(' ')}));
+				helper.log.error('invaild loglevel command: ' + data.join('/'));
+			}
+        	break;
+        	
         default:
         	helper.log.error('should not reach this code block');
 	}
