@@ -19,6 +19,15 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 	conn.on('close', function (code, reason) {
 		helper.log.info('websocket closed');
 	});
+	conn.on('error', function (err) {
+		if (err.code == 'ECONNRESET') {
+			// i.e., the browser window was just closed
+			helper.log.error('client has exited ungracefully');
+		} else {
+			helper.log.error(err.code);
+			throw err;
+		}
+	})
 }).listen(8001);
 
 function set (data, conn) {
@@ -61,7 +70,12 @@ var broadcast = function (msg) {
 	// not every update from the sysap contains info that is relevant for the interface (e.g. switch pressed event)
 	if (msgMD5 != lastBroadcast) {
 		socket.connections.forEach(function (conn) {
-			conn.sendText(msg);
+			try {
+				conn.sendText(msg);
+			}
+			catch (e) {
+				helper.log.error(e);
+			}
 		});
 	}
 	lastBroadcast = msgMD5;

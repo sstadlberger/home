@@ -15,6 +15,20 @@ var deviceTypes = {
 	'B001': 'shutter',
 	'1013': 'shutter'
 };
+var options = {
+	'switch': {
+		'dp': 'odp0000',
+		'normalize': function (input) { return input; },
+		'expand': false,
+		'defaultAction': 'toggle'
+	},
+	'dimmer': {
+		'dp': 'odp0001',
+		'normalize': function (input) {	return (input / 100); },
+		'expand': true,
+		'defaultAction': 'toggle'
+	}
+};
 
 /**
  * construct and sends a request for the master update
@@ -235,16 +249,6 @@ var response = function (stanza, data) {
  * @param {Object} structure - the data structure of the front-end
  */
 var status = function (data) {
-	var lookWhere = {
-		'switch': {
-			'dp': 'odp0000',
-			'normalize': function (input) { return input; }
-		},
-		'dimmer': {
-			'dp': 'odp0001',
-			'normalize': function (input) {	return (input / 100); }
-		}
-	};
 	data.status = [];
 	for (var mode = 0; mode < data.structure.length; mode++) {
 		data.status[mode] = [];
@@ -257,9 +261,9 @@ var status = function (data) {
 						var sn = buttonData.sn;
 						var cn = buttonData.cn;
 						if (data.actuators[sn]) {
-							var dp = lookWhere[deviceTypes[data.actuators[sn].deviceId]].dp;
+							var dp = options[deviceTypes[data.actuators[sn].deviceId]].dp;
 							if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
-								var value = lookWhere[deviceTypes[data.actuators[sn].deviceId]].normalize(data.actuators[sn].channels[cn].datapoints[dp]);
+								var value = options[deviceTypes[data.actuators[sn].deviceId]].normalize(data.actuators[sn].channels[cn].datapoints[dp]);
 								data.status[mode][floor][sn + '/' + cn] = value;
 							}
 						}
@@ -301,6 +305,9 @@ var updateStructure = function (broadcast) {
 							structure[mode].floors[floor].buttons[button].sn = currentButton.serialnumber;
 							structure[mode].floors[floor].buttons[button].cn = currentButton.channel;
 							structure[mode].floors[floor].buttons[button].type = deviceTypes[actuators[currentButton.serialnumber].deviceId];
+							structure[mode].floors[floor].buttons[button].expand = options[deviceTypes[actuators[currentButton.serialnumber].deviceId]].expand;
+							structure[mode].floors[floor].buttons[button].defaultAction = options[deviceTypes[actuators[currentButton.serialnumber].deviceId]].defaultAction;
+							structure[mode].floors[floor].buttons[button].name = currentButton.name;
 						}
 					}
 				}

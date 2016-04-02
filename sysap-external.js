@@ -117,8 +117,11 @@ var parse = function (type, serialnumber, channel, action) {
  */
 var set = function (serialnumber, channel, datapoint, value) {
 	if (value == 'x') {
+		// so far for all know toogle actions, the idp and opd have the same id so it's
+		// possible to just switch the 'i' and 'o'
+		var look = 'o' + datapoint.substr(1);
 		var data = info('actuators');
-		var current = data[serialnumber].channels[channel].datapoints[datapoint];
+		var current = data[serialnumber].channels[channel].datapoints[look];
 		value = current == 1 ? 0 : 1;
 	}
 	var setData = new xmpp_client.Element('iq', {
