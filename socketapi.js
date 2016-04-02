@@ -23,10 +23,10 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 		switch (err) {
 			// most of these errors are cause by a sudden client disconnect
 			// e.g. closing the browser window
-			case: 'ECONNRESET':
+			case 'ECONNRESET':
 				helper.log.error('client has exited ungracefully (ECONNRESET)');
 				break;
-			case: 'EHOSTUNREACH':
+			case 'EHOSTUNREACH':
 				helper.log.error('where has the client gone? (EHOSTUNREACH)');
 				break;
 			default:
