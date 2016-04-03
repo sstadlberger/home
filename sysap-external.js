@@ -21,60 +21,61 @@ var info = function (what) {
  * @param {string} action - what action should be performed (on, off, up, down, stop & set)
  * @returns {string} either what action was performed or error message
  */
-var parse = function (type, serialnumber, channel, action) {
+var parse = function (type, serialnumber, channel, action, value) {
 	var commands = {
-		switch : {
-			actions : {
-				on : { idp0000 : 1 },
-				off : { idp0000 : 0 },
-				toggle : { idp0000 : 'x' }
+		'switch' : {
+			'actions' : {
+				'on' : { 'idp0000' : 1 },
+				'off' : { 'idp0000' : 0 },
+				'toggle' : { 'idp0000' : 'x' }
 			},
-			deviceIds: [
+			'deviceIds' : [
 				'B002', // Schaltaktor 4-fach, 16A, REG
 				'100E' // Sensor/ Schaltaktor 2/1-fach
 			]
 		},
-		switchgroup : {
-			actions : {
-				on : { odp0002 : 1 },
-				off : { odp0002 : 0 },
-				toggle : { odp0002 : 'x' }
+		'switchgroup' : {
+			'actions' : {
+				'on' : { 'odp0002' : 1 },
+				'off' : { 'odp0002' : 0 },
+				'toggle' : { 'odp0002' : 'x' }
 			}
 		},
-		dimmer : {
-			actions : {
-				on : { idp0000 : 1 },
-				off : { idp0000 : 0 },
-				toggle : { idp0000 : 'x' },
-				up : { idp0001 : 9 }, // relative dimming: 9 means dimm up by 100%
-				down : { idp0001 : 1 }, // relative dimming: 9 means dimm down by 100%
-				stop : { idp0001 : 0 } // relative dimming: 0 means stop dimming action
+		'dimmer' : {
+			'actions' : {
+				'on' : { 'idp0000' : 1 },
+				'off' : { 'idp0000' : 0 },
+				'toggle' : { 'idp0000' : 'x' },
+				'up' : { 'idp0001' : 9 }, // relative dimming: 9 means dimm up by 100%
+				'down' : { 'idp0001' : 1 }, // relative dimming: 9 means dimm down by 100%
+				'stop' : { 'idp0001' : 0 }, // relative dimming: 0 means stop dimming action
+				'set' : { 'idp0002' : value }
 			},
-			deviceIds: [
+			'deviceIds' : [
 				'101C' // Dimmaktor 4-fach
 			]
 		},
-		shutter : {
-			actions : {
-				up : { idp0000 : 0 },
-				down : { idp0000 : 1 },
-				stop : { idp0001 : 1 }
+		'shutter' : {
+			'actions' : {
+				'up' : { 'idp0000' : 0 },
+				'down' : { 'idp0000' : 1 },
+				'stop' : { 'idp0001' : 1 }
 			},
-			deviceIds: [
+			'deviceIds' : [
 				'B001', // Jalousieaktor 4-fach, REG
 				'1013' // Sensor/ Jalousieaktor 1/1-fach
 			]
 		},
-		shuttergroup : {
-			actions : {
-				up : { odp0003 : 0 },
-				down : { odp0003 : 1 },
-				stop : { odp0004 : 1 }
+		'shuttergroup' : {
+			'actions' : {
+				'up' : { 'odp0003' : 0 },
+				'down' : { 'odp0003' : 1 },
+				'stop' : { 'odp0004' : 1 }
 			}
 		},
-		scene : {
-			actions : {
-				set : { odp0000 : 1 }
+		'scene' : {
+			'actions' : {
+				'set' : { 'odp0000' : 1 }
 			}
 		},
 	}

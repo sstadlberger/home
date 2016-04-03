@@ -40,9 +40,9 @@ function set (data, conn) {
 	var command = data.shift();
 	switch (command) {
 		case 'set':
-			if (data.length == 4) {
-				helper.log.debug('set channel ' + data[2] + ' of ' + data[0] + ' ' + data[1] + ' to ' + data[3]);
-				var status = sysap_external.parse(data[0], data[1], data[2], data[3]);
+			if (data.length == 4 || data.length == 5) {
+				helper.log.debug('set channel ' + data[2] + ' of ' + data[0] + ' ' + data[1] + ' to ' + data[3] + (data.length == 5 ? ' (' + data[4] + ')' : ''));
+				var status = sysap_external.parse(data[0], data[1], data[2], data[3], (data.length == 5 ? data[4] : null));
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
 				conn.sendText(JSON.stringify({'error': 'invalid set command: ' + data.join('/')}));

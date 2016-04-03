@@ -41,16 +41,16 @@ http.get('/legacy', function (req, res) {
 	var action = req.query.command;
 	
 	helper.log.debug('web legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
-	var status = sysap_external.parse(type, serialnumber, channel, action);
+	var status = sysap_external.parse(type, serialnumber, channel, action, null);
 	
 	res.header('Access-Control-Allow-Origin', '*');
 	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
 	res.send(status);
 });
 
-http.get('/set/:type/:serialnumber/:channel/:action', function (req, res) {
-	helper.log.debug('web set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action);
-	var status = sysap_external.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action);
+http.get('/set/:type/:serialnumber/:channel/:action/:value*?', function (req, res) {
+	helper.log.debug('web set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action + (req.params.value ? ' (' + req.params.value + ')' : ''));
+	var status = sysap_external.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action, (req.params.value ? req.params.value : null));
 	res.send(status);
 });
 
