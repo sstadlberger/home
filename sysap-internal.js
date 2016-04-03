@@ -36,7 +36,7 @@ var options = {
 var all = function () {
 	var allData = new xmpp_client.Element('iq', {
 		type: 'set',
-		to: 'mrha@busch-jaeger.de/rpc',
+		to: 'mrha@busch-jaeger.de/rpc'
 	})
 		.c('query', {
 			xmlns: 'jabber:iq:rpc'
@@ -71,6 +71,7 @@ var all = function () {
 							.c('int', {})
 								.t('0');
 	
+	helper.log.trace(allData.toString());
 	sysap.sysap.send(allData);
 	helper.log.debug('request master update');
 }
@@ -184,6 +185,42 @@ var response = function (stanza, data) {
 				// valid XML is not necessary for all parsers, but it helps (and ltx is small and fast BECAUSE it doesn't accept shitty XML)
 				allDataText = allDataText.replace('<Channel selector OR>', '&lt;Channel selector OR&gt;');
 				allDataText = allDataText.replace('<Channel selector AND>', '&lt;Channel selector AND&gt;');
+				allDataText = allDataText.replace('<Solar power device>', '&lt;Solar power device&gt;');
+				allDataText = allDataText.replace('<Inverter sensor>', '&lt;Inverter sensor&gt;');
+				allDataText = allDataText.replace('<Meter sensor>', '&lt;Meter sensor&gt;');
+				allDataText = allDataText.replace('<Battery sensor>', '&lt;Battery sensor&gt;');
+				allDataText = allDataText.replace('<Solar power production>', '&lt;Solar power production&gt;');
+				allDataText = allDataText.replace('<Inverter output power>', '&lt;Inverter output power&gt;');
+				allDataText = allDataText.replace('<Solar energy (today)>', '&lt;Solar energy (today)&gt;');
+				allDataText = allDataText.replace('<Injected energy (today)>', '&lt;Injected energy (today)&gt;');
+				allDataText = allDataText.replace('<Purchased energy (today)>', '&lt;Purchased energy (today)&gt;');
+				allDataText = allDataText.replace('<Inverter alarm>', '&lt;Inverter alarm&gt;');
+				allDataText = allDataText.replace('<Self-consumption>', '&lt;Self-consumption&gt;');
+				allDataText = allDataText.replace('<Self-sufficiency>', '&lt;Self-sufficiency&gt;');
+				allDataText = allDataText.replace('<Home power consumption>', '&lt;Home power consumption&gt;');
+				allDataText = allDataText.replace('<Power to grid>', '&lt;Power to grid&gt;');
+				allDataText = allDataText.replace('<Consumed energy (today)>', '&lt;Consumed energy (today)&gt;');
+				allDataText = allDataText.replace('<Timer program switch sensor>', '&lt;Timer program switch sensor&gt;');
+				allDataText = allDataText.replace('<Alert switch sensor>', '&lt;Alert switch sensor&gt;');
+				allDataText = allDataText.replace('<Meter alarm>', '&lt;Meter alarm&gt;');
+				allDataText = allDataText.replace('<Battery level>', '&lt;Battery level&gt;');
+				allDataText = allDataText.replace('<Battery power>', '&lt;Battery power&gt;');
+				allDataText = allDataText.replace('<During inverter alarm>', '&lt;During inverter alarm&gt;');
+				allDataText = allDataText.replace('<No inverter alarm>', '&lt;No inverter alarm&gt;');
+				allDataText = allDataText.replace('<During meter alarm>', '&lt;During meter alarm&gt;');
+				allDataText = allDataText.replace('<No meter alarm>', '&lt;No meter alarm&gt;');
+				allDataText = allDataText.replace('<Inverter alarm start>', '&lt;Inverter alarm start&gt;');
+				allDataText = allDataText.replace('<Inverter alarm end>', '&lt;Inverter alarm end&gt;');
+				allDataText = allDataText.replace('<Meter alarm start>', '&lt;Meter alarm start&gt;');
+				allDataText = allDataText.replace('<Meter alarm end>', '&lt;Meter alarm end&gt;');
+				allDataText = allDataText.replace('<Acoustic feedback>', '&lt;Acoustic feedback&gt;');
+				allDataText = allDataText.replace('<Actuating Fan Stage Heating>', '&lt;Actuating Fan Stage Heating&gt;');
+				allDataText = allDataText.replace('<Actuating Fan Manual On/Off Heating>', '&lt;Actuating Fan Manual On/Off Heating&gt;');
+				allDataText = allDataText.replace('<Window/Door position>', '&lt;Window/Door position&gt;');
+				allDataText = allDataText.replace('<Heating active>', '&lt;Heating active&gt;');
+				allDataText = allDataText.replace('<Cooling active>', '&lt;Cooling active&gt;');
+				allDataText = allDataText.replace('<Movement detector/blind actuator, 1-gang>', '&lt;Movement detector/blind actuator, 1-gang&gt;');
+				allDataText = allDataText.replace('<Movement detector/dimming actuator, 1-gang>', '&lt;Movement detector/dimming actuator, 1-gang&gt;');
 				allDataText = allDataText.replace('<The following strings from F000 to FFFF are not to be translated!>', '&lt;The following strings from F000 to FFFF are not to be translated!&gt;');
 				var allData = ltx.parse(allDataText);
 			

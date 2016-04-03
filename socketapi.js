@@ -40,35 +40,47 @@ function set (data, conn) {
 	var command = data.shift();
 	switch (command) {
 		case 'set':
-        	if (data.length == 4) {
+			if (data.length == 4) {
+				helper.log.debug('set channel ' + data[2] + ' of ' + data[0] + ' ' + data[1] + ' to ' + data[3]);
 				var status = sysap_external.parse(data[0], data[1], data[2], data[3]);
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
-				conn.sendText(JSON.stringify({'error': 'invalid websocket set command: ' + data.join('/')}));
+				conn.sendText(JSON.stringify({'error': 'invalid set command: ' + data.join('/')}));
 				helper.log.error('invalid set command: ' + data.join('/'));
 			}
-        	break;
-        
-        case 'status':
-        	var status = sysap_external.info('status');
-        	conn.sendText(JSON.stringify({'status': status}));
-        	break;
-        
-        case 'structure':
-        	var structure = sysap_external.info('structure');
-        	conn.sendText(JSON.stringify({'structure': structure}));
-        	break;
-        
-        case 'update':
-        	sysap_external.updateStructure(true);
-        	conn.sendText(JSON.stringify({'result': 'pushed update'}));
-        	break;
-        	
-        case 'loglevel':
-        	if (data.length == 1) {
-        		var newLoglevel = data[0];
-        		var valid = Object.keys(helper.log.loglevel);
-        		if (valid.indexOf(newLoglevel) == -1) {
+			break;
+			
+		case 'raw':
+			if (data.length == 4) {
+				helper.log.debug('raw set: ' + data[0] + '/' + data[1] + '/' + data[2] + ': ' + data[3]);
+				var status = sysap_external.set(data[0], data[1], data[2], data[3]);
+				conn.sendText(JSON.stringify({'result': status}));
+			} else {
+				conn.sendText(JSON.stringify({'error': 'invalid raw command: ' + data.join('/')}));
+				helper.log.error('invalid raw command: ' + data.join('/'));
+			}
+			break;
+		
+		case 'status':
+			var status = sysap_external.info('status');
+			conn.sendText(JSON.stringify({'status': status}));
+			break;
+		
+		case 'structure':
+			var structure = sysap_external.info('structure');
+			conn.sendText(JSON.stringify({'structure': structure}));
+			break;
+		
+		case 'update':
+			sysap_external.updateStructure(true);
+			conn.sendText(JSON.stringify({'result': 'pushed update'}));
+			break;
+			
+		case 'loglevel':
+			if (data.length == 1) {
+				var newLoglevel = data[0];
+				var valid = Object.keys(helper.log.loglevel);
+				if (valid.indexOf(newLoglevel) == -1) {
 					conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + newLoglevel}));
 					helper.log.error('invalid loglevel command: ' + newLoglevel);
 				} else {
@@ -80,10 +92,10 @@ function set (data, conn) {
 				conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + data.join(' ')}));
 				helper.log.error('invaild loglevel command: ' + data.join('/'));
 			}
-        	break;
-        	
-        default:
-        	helper.log.error('should not reach this code block');
+			break;
+			
+		default:
+			helper.log.error('should not reach this code block');
 	}
 }
 

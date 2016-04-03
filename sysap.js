@@ -15,18 +15,21 @@ var data = {
 	'status': [],
 	'structure': []
 };
+var count = 0;
 
 var sysap = new xmpp_client({
-	'bosh': {
-		'url': config.bosh.url
+	'websocket': {
+		'url': config.websocket.url
 	},
-	'jid': config.bosh.jid + '/' + config.bosh.resource,
-	'password': config.bosh.password,
+	'jid': config.websocket.jid + '/' + config.websocket.resource,
+	'password': config.websocket.password,
 	'preferred': 'DIGEST-MD5'
 });
 
 sysap.on('online', function() {
 	helper.log.info('sysap online');
+	
+	keepAlive();
 	
 	var talkToMe =  new xmpp_client.Element('presence', {
 		'from': config.bosh.jid,
@@ -34,6 +37,7 @@ sysap.on('online', function() {
 		'to': 'mrha@busch-jaeger.de/rpc',
 		'xmlns': 'jabber:client'
 	});
+	helper.log.trace(talkToMe.toString());
 	sysap.send(talkToMe);
 	
 	var talkToMe2 =  new xmpp_client.Element('presence', {
@@ -44,6 +48,7 @@ sysap.on('online', function() {
 			'ver': '1.0',
 			'node': 'http://gonicus.de/caps',
 		});
+	helper.log.trace(talkToMe2.toString());
 	sysap.send(talkToMe2);
 	
 	helper.log.debug('request subscribe');
@@ -52,6 +57,8 @@ sysap.on('online', function() {
 });
 
 sysap.on('stanza', function(stanza) {
+	
+	helper.log.trace(stanza.toString());
 	
 	// UPDATE PACKET
 	if (stanza.getName() == 'message' &&
@@ -84,14 +91,29 @@ sysap.on('stanza', function(stanza) {
 		helper.log.warn('unknown stanza');
 	}
 	
-	helper.log.trace(stanza.toString());
-	
 });
 
 sysap.on('error', function (e) {
 	helper.log.error('sysap error:');
 	helper.log.error(e);
 });
+
+
+function keepAlive () {
+	count++;
+	var ping = new xmpp_client.Element('iq', {
+		type: 'get',
+		to: 'mrha@busch-jaeger.de/rpc',
+		id: count
+	})
+		.c('ping', {
+			xmlns: 'urn:xmpp:ping'
+		})
+	helper.log.trace(ping.toString());
+	sysap.send(ping);
+	
+	setTimeout(keepAlive, 10 * 1000);
+}
 
 Object.assign(module.exports, { 'getData': function (what) { return data[what]; } });
 Object.assign(module.exports, { 'setStructure': function (structure) { data.structure = structure; } });
