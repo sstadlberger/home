@@ -20,14 +20,17 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 		helper.log.info('websocket closed');
 	});
 	conn.on('error', function (err) {
-		switch (err) {
+		switch (err.code) {
 			// most of these errors are cause by a sudden client disconnect
-			// e.g. closing the browser window
+			// e.g. closing the browser window or turning off the computer
 			case 'ECONNRESET':
 				helper.log.error('client has exited ungracefully (ECONNRESET)');
 				break;
 			case 'EHOSTUNREACH':
 				helper.log.error('where has the client gone? (EHOSTUNREACH)');
+				break;
+			case 'ETIMEDOUT':
+				helper.log.error('where has the client gone? (ETIMEDOUT)');
 				break;
 			default:
 				helper.log.error(err.code);
@@ -72,8 +75,13 @@ function set (data, conn) {
 			break;
 		
 		case 'update':
-			sysap_external.updateStructure(true);
-			conn.sendText(JSON.stringify({'result': 'pushed update'}));
+			if (data.length == 1 && data[0] == 'all') {
+				sysap_external.updateAll();
+				conn.sendText(JSON.stringify({'result': 'requested master update'}));
+			} else {
+				sysap_external.updateStructure(true);
+				conn.sendText(JSON.stringify({'result': 'pushed update'}));
+			}
 			break;
 			
 		case 'loglevel':

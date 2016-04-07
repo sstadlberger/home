@@ -222,6 +222,10 @@ var response = function (stanza, data) {
 				allDataText = allDataText.replace('<Movement detector/blind actuator, 1-gang>', '&lt;Movement detector/blind actuator, 1-gang&gt;');
 				allDataText = allDataText.replace('<Movement detector/dimming actuator, 1-gang>', '&lt;Movement detector/dimming actuator, 1-gang&gt;');
 				allDataText = allDataText.replace('<The following strings from F000 to FFFF are not to be translated!>', '&lt;The following strings from F000 to FFFF are not to be translated!&gt;');
+				
+				helper.log.trace("\nmaster update payload:\n");
+				helper.log.trace(allDataText);
+				
 				var allData = ltx.parse(allDataText);
 			
 				// floors and rooms
@@ -256,12 +260,14 @@ var response = function (stanza, data) {
 								data.actuators[sn]['channels'][cn] = {
 									datapoints: {}
 								};
-								['inputs', 'outputs'].forEach(function (put) {
-									helper.ltx.getElements(channel, [put, 'dataPoint']).forEach(function (dataPoint) {
-										var dp = helper.ltx.getAttr(dataPoint, 'i');
-										if (dp) {
-											data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
-										}
+								['inputs', 'outputs', 'parameters'].forEach(function (put) {
+									['dataPoint', 'parameter'].forEach(function (name) {
+										helper.ltx.getElements(channel, [put, name]).forEach(function (dataPoint) {
+											var dp = helper.ltx.getAttr(dataPoint, 'i');
+											if (dp) {
+												data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
+											}
+										});
 									});
 								});
 							}
