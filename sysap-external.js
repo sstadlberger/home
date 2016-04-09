@@ -22,6 +22,9 @@ var info = function (what) {
  * @returns {string} either what action was performed or error message
  */
 var parse = function (type, serialnumber, channel, action, value) {
+	if (type == 'blind') {
+		type = 'shutter'; // only different in interface; actuator is the same
+	}
 	var commands = {
 		'switch' : {
 			'actions' : {

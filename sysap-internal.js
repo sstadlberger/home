@@ -5,6 +5,7 @@ var config = require('./config.js');
 var websocket = require('./socketapi.js');
 var sysap = require('./sysap.js');
 var fs = require('fs');
+var util = require('util');
 
 
 // see also var commands in sysap-external.js:parse()
@@ -17,16 +18,26 @@ var deviceTypes = {
 };
 var options = {
 	'switch': {
-		'dp': 'odp0000',
-		'normalize': function (input) { return input; },
-		'expand': false,
-		'defaultAction': 'toggle'
+		'dp': 'odp0000'
 	},
 	'dimmer': {
+		'dp': 'odp0001'
+	},
+	'shutter': {
 		'dp': 'odp0001',
-		'normalize': function (input) {	return (input / 100); },
-		'expand': true,
-		'defaultAction': 'toggle'
+		'infos':  {
+			'pm0000':  'upspeed',
+			'pm0001': 'downspeed'
+		}
+	},
+	'blind': {
+		'dp': 'odp0001',
+		'infos':  {
+			'odp0002': 'angle',
+			'pm0000':  'upspeed',
+			'pm0001': 'downspeed',
+			'pm0002': 'anglespeed'
+		}
 	}
 };
 
@@ -303,11 +314,23 @@ var status = function (data) {
 						var buttonData = data.structure[mode].floors[floor].buttons[button];
 						var sn = buttonData.sn;
 						var cn = buttonData.cn;
-						if (data.actuators[sn]) {
-							var dp = options[deviceTypes[data.actuators[sn].deviceId]].dp;
+						if (data.actuators[sn] && data.actuators[sn].channels[cn]) {
+							var type = _typeHelper(data.actuators, deviceTypes[data.actuators[sn].deviceId], sn, cn);
+							var dp = options[type].dp;
 							if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
-								var value = options[deviceTypes[data.actuators[sn].deviceId]].normalize(data.actuators[sn].channels[cn].datapoints[dp]);
-								data.status[mode][floor][sn + '/' + cn] = value;
+								var value = data.actuators[sn].channels[cn].datapoints[dp];
+								data.status[mode][floor][sn + '/' + cn] = {
+									'value' : value
+								};
+								if (options[deviceTypes[data.actuators[sn].deviceId]].infos) {
+									data.status[mode][floor][sn + '/' + cn].infos = {};
+									var names = Object.keys(options[type].infos);
+									for (var i = 0; i < names.length; i++) {
+										if (typeof data.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
+											data.status[mode][floor][sn + '/' + cn].infos[options[type].infos[names[i]]] = data.actuators[sn].channels[cn].datapoints[names[i]];
+										}
+									}
+								}
 							}
 						}
 					}
@@ -333,23 +356,22 @@ var updateStructure = function (broadcast) {
 				var currentFloor = loadedStructure[mode].floors[floor];
 				structure[mode].floors[floor] = {};
 				structure[mode].floors[floor].name = currentFloor.name;
-				structure[mode].floors[floor].content = currentFloor.content;
 				structure[mode].floors[floor].background = currentFloor.background;
 				structure[mode].floors[floor].buttons = [];
 				if (loadedStructure[mode].floors[floor].buttons) {
 					for (var button = 0; button < loadedStructure[mode].floors[floor].buttons.length; button++) {
 						var currentButton = loadedStructure[mode].floors[floor].buttons[button];
-						if (actuators[currentButton.serialnumber]) {
+						var sn = currentButton.serialnumber;
+						var cn = currentButton.channel;
+						if (actuators[sn]) {
 							structure[mode].floors[floor].buttons[button] = {};
 							structure[mode].floors[floor].buttons[button].x = currentButton.x;
 							structure[mode].floors[floor].buttons[button].y = currentButton.y;
 							structure[mode].floors[floor].buttons[button].iconOn = currentButton.iconOn;
 							structure[mode].floors[floor].buttons[button].iconOff = currentButton.iconOff;
-							structure[mode].floors[floor].buttons[button].sn = currentButton.serialnumber;
-							structure[mode].floors[floor].buttons[button].cn = currentButton.channel;
-							structure[mode].floors[floor].buttons[button].type = deviceTypes[actuators[currentButton.serialnumber].deviceId];
-							structure[mode].floors[floor].buttons[button].expand = options[deviceTypes[actuators[currentButton.serialnumber].deviceId]].expand;
-							structure[mode].floors[floor].buttons[button].defaultAction = options[deviceTypes[actuators[currentButton.serialnumber].deviceId]].defaultAction;
+							structure[mode].floors[floor].buttons[button].sn = sn;
+							structure[mode].floors[floor].buttons[button].cn = cn;
+							structure[mode].floors[floor].buttons[button].type = _typeHelper(actuators, deviceTypes[actuators[sn].deviceId], sn, cn);
 							structure[mode].floors[floor].buttons[button].name = currentButton.name;
 						}
 					}
@@ -358,10 +380,20 @@ var updateStructure = function (broadcast) {
 		}
 	}
 	helper.log.info('structure for interface updated');
+	helper.log.trace(util.inspect(structure, {showHidden: false, depth: null}));
 	sysap.setStructure(structure);
 	if (broadcast) {
 		websocket.broadcast(JSON.stringify({'structure': structure}));
 	}
+}
+
+var _typeHelper = function (actuators, type, sn, ch) {
+	if (type == 'shutter') {
+		if (actuators[sn].channels[ch].datapoints['pm0002'] > 0) {
+			type = 'blind';
+		}
+	}
+	return type;
 }
 
 module.exports.all = all;

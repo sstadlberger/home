@@ -113,6 +113,7 @@ var broadcast = function (msg) {
 	var msgMD5 = md5(msg);
 	// not every update from the sysap contains info that is relevant for the interface (e.g. switch pressed event)
 	if (msgMD5 != lastBroadcast) {
+		helper.log.debug('broadcast message');
 		socket.connections.forEach(function (conn) {
 			try {
 				conn.sendText(msg);
