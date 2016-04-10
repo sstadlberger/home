@@ -62,6 +62,8 @@ var parse = function (type, serialnumber, channel, action, value) {
 			'actions' : {
 				'up' : { 'idp0000' : 0 },
 				'down' : { 'idp0000' : 1 },
+				'toggle-up' : { 'idp0000' : 'x-0' },
+				'toggle-down' : { 'idp0000' : 'x-1' },
 				'stop' : { 'idp0001' : 1 }
 			},
 			'deviceIds' : [
@@ -127,6 +129,19 @@ var set = function (serialnumber, channel, datapoint, value) {
 		var data = info('actuators');
 		var current = data[serialnumber].channels[channel].datapoints[look];
 		value = current == 1 ? 0 : 1;
+	} else if (typeof value === 'string' && value.substr(0, 2) == 'x-') {
+		// odp0000 = 0, 1: not moving
+		// odp0000 = 3: moving down
+		// odp0000 = 2: moving up
+		var data = info('actuators');
+		value = value.substr(2);
+		if (
+			(data[serialnumber].channels[channel].datapoints['odp0000'] == 2 && value == 0) ||
+			(data[serialnumber].channels[channel].datapoints['odp0000'] == 3 && value == 1)
+		) {
+			datapoint = 'idp0001';
+			value = 1;
+		}
 	}
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',

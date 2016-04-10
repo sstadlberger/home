@@ -27,7 +27,8 @@ var options = {
 		'dp': 'odp0001',
 		'infos':  {
 			'pm0000':  'upspeed',
-			'pm0001': 'downspeed'
+			'pm0001': 'downspeed',
+			'odp0000': 'moving'
 		}
 	},
 	'blind': {
@@ -36,7 +37,8 @@ var options = {
 			'odp0002': 'angle',
 			'pm0000':  'upspeed',
 			'pm0001': 'downspeed',
-			'pm0002': 'anglespeed'
+			'pm0002': 'anglespeed',
+			'odp0000': 'moving'
 		}
 	}
 };
