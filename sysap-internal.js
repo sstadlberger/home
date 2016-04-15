@@ -26,6 +26,8 @@ var options = {
 	'shutter': {
 		'dp': 'odp0001',
 		'infos':  {
+			'odp0002': 'x-angle',
+			'odp0002': 'x-fullclosed',
 			'pm0000':  'upspeed',
 			'pm0001': 'downspeed',
 			'odp0000': 'moving'
@@ -37,7 +39,7 @@ var options = {
 			'odp0002': 'angle',
 			'pm0000':  'upspeed',
 			'pm0001': 'downspeed',
-			'pm0002': 'anglespeed',
+			'pm0002': 'fullclosed',
 			'odp0000': 'moving'
 		}
 	}
@@ -320,16 +322,44 @@ var status = function (data) {
 							var type = _typeHelper(data.actuators, deviceTypes[data.actuators[sn].deviceId], sn, cn);
 							var dp = options[type].dp;
 							if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
-								var value = data.actuators[sn].channels[cn].datapoints[dp];
 								data.status[mode][floor][sn + '/' + cn] = {
-									'value' : value
+									'value' : data.actuators[sn].channels[cn].datapoints[dp]
 								};
 								if (options[deviceTypes[data.actuators[sn].deviceId]].infos) {
 									data.status[mode][floor][sn + '/' + cn].infos = {};
 									var names = Object.keys(options[type].infos);
 									for (var i = 0; i < names.length; i++) {
 										if (typeof data.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
-											data.status[mode][floor][sn + '/' + cn].infos[options[type].infos[names[i]]] = data.actuators[sn].channels[cn].datapoints[names[i]];
+											var value = data.actuators[sn].channels[cn].datapoints[names[i]];
+											var name = options[type].infos[names[i]];
+											if (name.substr(0, 2) == 'x-') {
+												if (type == 'shutter') {
+													if (name == 'x-angle') {
+														// use custom calibration for "nearly-closed" state
+														// i.e. when a little bit of light shines through the slots in the shutters
+														var dark = buttonData.extra;
+														var runtime = data.actuators[sn].channels[cn].datapoints['pm0001'];
+														var realTime = runtime - dark;
+														var offset = realTime / runtime;
+														var currentValue = data.status[mode][floor][sn + '/' + cn].value;
+													
+														var currentTime = runtime * (currentValue / 100);
+														if (currentTime < realTime) {
+															value = 0;
+														} else {
+															var over = currentTime - realTime;
+															value = over / dark * 100;
+														}
+													
+														var realValue = currentValue / offset;
+														data.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
+													} else if (name == 'x-fullclosed') {
+														value = data.structure[mode].floors[floor].buttons[button].extra * 1000;
+													}
+												}
+												name = name.substr(2);
+											}
+											data.status[mode][floor][sn + '/' + cn].infos[name] = value;
 										}
 									}
 								}
@@ -375,6 +405,9 @@ var updateStructure = function (broadcast) {
 							structure[mode].floors[floor].buttons[button].cn = cn;
 							structure[mode].floors[floor].buttons[button].type = _typeHelper(actuators, deviceTypes[actuators[sn].deviceId], sn, cn);
 							structure[mode].floors[floor].buttons[button].name = currentButton.name;
+							if (typeof currentButton.extra !== undefined) {
+								structure[mode].floors[floor].buttons[button].extra = currentButton.extra;
+							}
 						}
 					}
 				}
