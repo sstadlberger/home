@@ -124,18 +124,17 @@ var parse = function (type, serialnumber, channel, action, value) {
  * @param {string} value - the value to set the datapoint to
  */
 var set = function (serialnumber, channel, datapoint, value) {
+	var data = info('actuators');
 	if (value == 'x') {
 		// so far for all know toogle actions, the idp and opd have the same id so it's
 		// possible to just switch the 'i' and 'o'
 		var look = 'o' + datapoint.substr(1);
-		var data = info('actuators');
 		var current = data[serialnumber].channels[channel].datapoints[look];
 		value = current == 1 ? 0 : 1;
 	} else if (typeof value === 'string' && value.substr(0, 2) == 'x-') {
 		// odp0000 = 0, 1: not moving
 		// odp0000 = 3: moving down
 		// odp0000 = 2: moving up
-		var data = info('actuators');
 		value = value.substr(2);
 		if (
 			(data[serialnumber].channels[channel].datapoints['odp0000'] == 2 && value == 0) ||
@@ -152,7 +151,7 @@ var set = function (serialnumber, channel, datapoint, value) {
 		value = value.substr(2);
 		setTimeout(function () {
 			set(serialnumber, channel, 'idp0001', 1)
-		}, 200 + data[serialnumber].channels[channel].datapoints['pm0006']);
+		}, 200 + parseInt(data[serialnumber].channels[channel].datapoints['pm0006']));
 	}
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',

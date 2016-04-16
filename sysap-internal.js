@@ -27,7 +27,7 @@ var options = {
 		'dp': 'odp0001',
 		'infos':  {
 			'odp0002': 'x-angle',
-			'odp0002': 'x-fullclosed',
+			'pm0002': 'x-fullclosed',
 			'pm0000':  'upspeed',
 			'pm0001': 'downspeed',
 			'odp0000': 'moving'
