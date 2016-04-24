@@ -14,7 +14,8 @@ var deviceTypes = {
 	'100E': 'switch',
 	'101C': 'dimmer',
 	'B001': 'shutter',
-	'1013': 'shutter'
+	'1013': 'shutter',
+	'9004': 'thermostat'
 };
 var options = {
 	'switch': {
@@ -41,6 +42,15 @@ var options = {
 			'pm0001': 'downspeed',
 			'pm0002': 'fullclosed',
 			'odp0000': 'moving'
+		}
+	},
+	'thermostat': {
+		'dp': 'odp0007',
+		'infos':  {
+			'odp0003': 'x-set',
+			'odp0000': 'x-heat',
+			'odp0006': 'x-on',
+			'odp0008': 'x-eco',
 		}
 	}
 };
@@ -355,6 +365,27 @@ var status = function (data) {
 														data.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
 													} else if (name == 'x-fullclosed') {
 														value = data.structure[mode].floors[floor].buttons[button].extra * 1000;
+													}
+												} else if (type == 'thermostat') {
+													if (name == 'x-set') {
+														value = 21 + parseFloat(data.actuators[sn].channels[cn].datapoints['odp0003']);
+														if (data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															// show the real eco target temperature
+															value = value - parseFloat(data.actuators[sn].channels[cn].datapoints['pm0000']);
+														}
+														if (data.actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
+															// off
+															value = 0;
+														}
+													} else if (name == 'x-heat') {
+														value = data.actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
+													} else if (name == 'x-on') {
+														value = data.actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
+													} else if (name == 'x-eco') {
+														value = false;
+														if ((data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 || data.actuators[sn].channels[cn].datapoints['odp0008'] == 36) && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															value = true;
+														}
 													}
 												}
 												name = name.substr(2);

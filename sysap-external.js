@@ -85,6 +85,18 @@ var parse = function (type, serialnumber, channel, action, value) {
 				'set' : { 'odp0000' : 1 }
 			}
 		},
+		'thermostat' : {
+			'actions' : {
+				'toggle' : { 'idp000B' : 'x' },
+				'set' : { 'idp0007' : (value - 21) },
+				'up' : { 'idp0007' : '+0.5' },
+				'down' : { 'idp0007' : '-0.5' },
+				'on' : { 'idp000B' : 1 },
+				'off' : { 'idp000B' : 0 },
+				'eco-on' : { 'idp0009' : 1 },
+				'eco-off' : { 'idp0009' : 0 }
+			}
+		}
 	}
 	var actuators = info('actuators');
 	
@@ -126,12 +138,18 @@ var parse = function (type, serialnumber, channel, action, value) {
 var set = function (serialnumber, channel, datapoint, value) {
 	var data = info('actuators');
 	if (value == 'x') {
-		// so far for all know toogle actions, the idp and opd have the same id so it's
-		// possible to just switch the 'i' and 'o'
-		var look = 'o' + datapoint.substr(1);
-		var current = data[serialnumber].channels[channel].datapoints[look];
-		value = current == 1 ? 0 : 1;
+		if (data[serialnumber].deviceId == '9004') {
+			// thermostat
+			var current = data[serialnumber].channels[channel].datapoints['odp0006'];
+			value = current == 1 ? 0 : 1;
+		} else {
+			// default: the idp and opd have the same id, so it's possible to just switch the 'i' and 'o'
+			var look = 'o' + datapoint.substr(1);
+			var current = data[serialnumber].channels[channel].datapoints[look];
+			value = current == 1 ? 0 : 1;
+		}
 	} else if (typeof value === 'string' && value.substr(0, 2) == 'x-') {
+		// toggle movement of shutters on and off
 		// odp0000 = 0, 1: not moving
 		// odp0000 = 3: moving down
 		// odp0000 = 2: moving up
@@ -144,6 +162,7 @@ var set = function (serialnumber, channel, datapoint, value) {
 			value = 1;
 		}
 	} else if (typeof value === 'string' && value.substr(0, 2) == 'p-') {
+		// activate actuator for 200ms + dead time to rotate blinds step by step
 		// odp0000 = 0, 1: not moving
 		// odp0000 = 3: moving down
 		// odp0000 = 2: moving up
@@ -152,6 +171,11 @@ var set = function (serialnumber, channel, datapoint, value) {
 		setTimeout(function () {
 			set(serialnumber, channel, 'idp0001', 1)
 		}, 200 + parseInt(data[serialnumber].channels[channel].datapoints['pm0006']));
+	} else if (typeof value === 'string' && (value.substr(0, 1) == '-' || value.substr(0, 1) == '+')) {
+		// rise or lower set temperature by x degrees
+		var changeValue = parseFloat(value.substr(1)) * (value.substr(0, 1) == '-' ? -1 : 1);
+		// value is set as difference to 21°C
+		value = parseFloat(data[serialnumber].channels[channel].datapoints['odp0002']) + changeValue - 21;
 	}
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',
