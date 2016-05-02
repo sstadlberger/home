@@ -215,8 +215,13 @@ var updateAll = function () {
 	sysap_internal.all();
 }
 
+var setDP = function (sn, cn, dp, value) {
+	sysap.setDP(sn, cn, dp, value);
+}
+
 module.exports.info = info;
 module.exports.parse = parse;
 module.exports.set = set;
 module.exports.updateStructure = updateStructure;
 module.exports.updateAll = updateAll;
+module.exports.setDP = setDP;

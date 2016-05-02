@@ -115,7 +115,24 @@ function keepAlive () {
 	setTimeout(keepAlive, 10 * 1000);
 }
 
+var setDP = function (sn, cn, dp, value) {
+	if (!data.actuators[sn]) {
+		data.actuators[sn] = {
+			'serialNumber': sn,
+			'channels': {}
+		};
+	}
+	if (!data.actuators[sn]['channels'][cn]) {
+		data.actuators[sn]['channels'][cn] = {
+			'datapoints': {}
+		};
+	}
+	data.actuators[sn]['channels'][cn]['datapoints'][dp] = value;
+	sysap_internal.status(data);
+}
+
 Object.assign(module.exports, { 'getData': function (what) { return data[what]; } });
+Object.assign(module.exports, { 'setDP': setDP });
 Object.assign(module.exports, { 'setStructure': function (structure) { data.structure = structure; } });
 Object.assign(module.exports, { 'sysap': sysap });
 

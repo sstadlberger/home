@@ -60,6 +60,14 @@ http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 	res.send(req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 });
 
+http.get('/input/:serialnumber/:channel/:datapoint/:value', function (req, res) {
+	helper.log.debug('input raw data: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
+	sysap_external.setDP(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
+	res.set('Connection', 'close');
+	res.send('OK');
+	res.end();
+});
+
 http.listen(8080, function () {
 	helper.log.info('http api loaded');
 });
