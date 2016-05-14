@@ -96,16 +96,62 @@ var all = function () {
 							.c('int', {})
 								.t('0');
 	
-	helper.log.trace(allData.toString());
+	helper.log.trace('[SEND] ' + allData.root().toString());
 	sysap.sysap.send(allData);
 	helper.log.debug('request master update');
 }
 
 /**
+ * construct and sends a subscribe request
+ */
+var subscribe = function () {
+	var talkToMe =  new xmpp_client.Element('presence', {
+		'from': config.bosh.jid,
+		'type': 'subscribe',
+		'to': 'mrha@busch-jaeger.de/rpc',
+		'xmlns': 'jabber:client'
+	});
+	helper.log.trace('[SEND] ' + talkToMe.root().toString());
+	sysap.sysap.send(talkToMe);
+	
+	var talkToMe2 =  new xmpp_client.Element('presence', {
+		'xmlns': 'jabber:client'
+	})
+		.c('c', {
+			'xmlns': 'http://jabber.org/protocol/caps',
+			'ver': '1.0',
+			'node': 'http://gonicus.de/caps',
+		});
+	helper.log.trace('[SEND] ' + talkToMe2.root().toString());
+	sysap.sysap.send(talkToMe2);
+	
+	helper.log.debug('request subscribe');
+}
+
+/**
+ * construct and sends a subscribe confirmation
+ */
+var subscribed = function () {
+	var talkToMe =  new xmpp_client.Element('presence', {
+		'from': config.bosh.jid,
+		'type': 'subscribed',
+		'to': 'mrha@busch-jaeger.de/rpc',
+		'xmlns': 'jabber:client'
+	});
+	helper.log.trace('[SEND] ' + talkToMe.root().toString());
+	sysap.sysap.send(talkToMe);
+	
+	helper.log.debug('confirm subscribe');
+}
+
+/**
  * parses a presence packet and logs the info
  * @param {Object} stanza - a node-xmpp-client xml data packet
+ * @returns {Boolean} true if sysap is shown as present, otherwise false
  */
 var presence = function (stanza) {
+	
+	var back = false;
 	
 	var from = helper.ltx.getAttr(stanza, 'from');
 	
@@ -114,6 +160,7 @@ var presence = function (stanza) {
 			helper.log.debug('myself present');
 		} else if (from == 'mrha@busch-jaeger.de/rpc') {
 			helper.log.debug('sysap present');
+			back = true;
 		} else {
 			helper.log.info('sysap unknown user present: ' + from);
 		}
@@ -121,7 +168,7 @@ var presence = function (stanza) {
 		helper.log.warn('unknown presence packet');
 		helper.log.trace(stanza.toString());
 	}
-	
+	return back;
 }
 
 /**
@@ -464,6 +511,8 @@ var _typeHelper = function (actuators, type, sn, ch) {
 
 module.exports.all = all;
 module.exports.presence = presence;
+module.exports.subscribe = subscribe;
+module.exports.subscribed = subscribed;
 module.exports.update = update;
 module.exports.response = response;
 module.exports.status = status;

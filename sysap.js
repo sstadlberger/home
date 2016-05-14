@@ -16,6 +16,8 @@ var data = {
 	'structure': []
 };
 var count = 0;
+var lastping;
+var subscribed = false;
 
 var sysap = new xmpp_client({
 	'websocket': {
@@ -28,37 +30,13 @@ var sysap = new xmpp_client({
 
 sysap.on('online', function() {
 	helper.log.info('sysap online');
-	
 	keepAlive();
-	
-	var talkToMe =  new xmpp_client.Element('presence', {
-		'from': config.bosh.jid,
-		'type': 'subscribe',
-		'to': 'mrha@busch-jaeger.de/rpc',
-		'xmlns': 'jabber:client'
-	});
-	helper.log.trace(talkToMe.toString());
-	sysap.send(talkToMe);
-	
-	var talkToMe2 =  new xmpp_client.Element('presence', {
-		'xmlns': 'jabber:client'
-	})
-		.c('c', {
-			'xmlns': 'http://jabber.org/protocol/caps',
-			'ver': '1.0',
-			'node': 'http://gonicus.de/caps',
-		});
-	helper.log.trace(talkToMe2.toString());
-	sysap.send(talkToMe2);
-	
-	helper.log.debug('request subscribe');
-	
-	sysap_internal.all();
+	sysap_internal.subscribe();
 });
 
 sysap.on('stanza', function(stanza) {
 	
-	helper.log.trace(stanza.toString());
+	helper.log.trace('[RECEIVED] ' + stanza.toString());
 	
 	// UPDATE PACKET
 	if (stanza.getName() == 'message' &&
@@ -75,16 +53,23 @@ sysap.on('stanza', function(stanza) {
 	} else if (stanza.getName() == 'iq' &&
 			   stanza.attrs.type == 'result' && 
 			   stanza.attrs.from == 'mrha@busch-jaeger.de/rpc') {
-		
-		helper.log.debug('result packet received');
-		sysap_internal.response(stanza, data);
-		sysap_internal.status(data);
-	
+		if (stanza.attrs.id == lastping) {
+			// ping result;
+			helper.log.trace('ping result packet received');
+		} else {
+			helper.log.debug('result packet received');
+			sysap_internal.response(stanza, data);
+			sysap_internal.status(data);
+		}
 	
 	} else if (stanza.getName() == 'presence') {
 		helper.log.debug('presence packet received');
-		sysap_internal.presence(stanza);
-	
+		var is_sysap = sysap_internal.presence(stanza);
+		if (is_sysap && !subscribed) {
+			sysap_internal.subscribed();
+			sysap_internal.all();
+			subscribed = true;
+		}
 	
 	// EVERYTHING ELSE
 	} else {
@@ -104,12 +89,14 @@ function keepAlive () {
 	var ping = new xmpp_client.Element('iq', {
 		type: 'get',
 		to: 'mrha@busch-jaeger.de/rpc',
-		id: count
+		id: count,
+		xmlns: 'jabber:client'
 	})
 		.c('ping', {
 			xmlns: 'urn:xmpp:ping'
 		})
-	helper.log.trace(ping.toString());
+	helper.log.trace('[SEND] ' + ping.root().toString());
+	lastping = count;
 	sysap.send(ping);
 	
 	setTimeout(keepAlive, 10 * 1000);
