@@ -1,20 +1,12 @@
 var xmpp_client = require('node-xmpp-client');
+var fs = require('fs');
 var config = require('./config.js');
 var helper = require('./helper.js');
 var sysap_internal = require('./sysap-internal.js');
 var sysap_external = require('./sysap-external.js');
 
 // this set of vars contains/will contain the master status
-var data = {
-	'house': {
-		'floor': {},
-		'room': {}
-	},
-	'actuators': {},
-	'strings': {},
-	'status': [],
-	'structure': []
-};
+var data = JSON.parse(fs.readFileSync('./data.json', 'utf8'));;
 var count = 0;
 var lastping;
 var subscribed = false;
@@ -108,6 +100,9 @@ var setDP = function (sn, cn, dp, value) {
 			'serialNumber': sn,
 			'channels': {}
 		};
+	}
+	if (!data.actuators[sn]['channels']) {
+		data.actuators[sn]['channels'] = {};
 	}
 	if (!data.actuators[sn]['channels'][cn]) {
 		data.actuators[sn]['channels'][cn] = {
