@@ -406,8 +406,12 @@ var status = function (data) {
 								var type = _typeHelper(data.actuators, deviceTypes[data.actuators[sn].deviceId], sn, cn);
 								var dp = options[type].dp;
 								if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
+									var value = data.actuators[sn].channels[cn].datapoints[dp];
+									if (type == 'thermostat') {
+										value = Math.round(value * 10) / 10;
+									}
 									data.status[mode][floor][sn + '/' + cn] = {
-										'value' : data.actuators[sn].channels[cn].datapoints[dp]
+										'value' : value
 									};
 									if (options[deviceTypes[data.actuators[sn].deviceId]].infos) {
 										data.status[mode][floor][sn + '/' + cn].infos = {};
