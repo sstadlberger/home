@@ -16,6 +16,7 @@ var deviceTypes = {
 	'B001': 'shutter',
 	'1013': 'shutter',
 	'9004': 'thermostat',
+	'DS18B20': 'temperature',
 	'4800': 'scene'
 };
 var options = {
@@ -53,6 +54,9 @@ var options = {
 			'odp0006': 'x-on',
 			'odp0008': 'x-eco',
 		}
+	},
+	'temperature': {
+		'dp': 'odp0000'
 	}
 };
 
@@ -395,71 +399,73 @@ var status = function (data) {
 				if (data.structure[mode].floors[floor].buttons) {
 					for (var button = 0; button < data.structure[mode].floors[floor].buttons.length; button++) {
 						var buttonData = data.structure[mode].floors[floor].buttons[button];
-						var sn = buttonData.sn;
-						var cn = buttonData.cn;
-						if (data.actuators[sn] && data.actuators[sn].channels[cn]) {
-							var type = _typeHelper(data.actuators, deviceTypes[data.actuators[sn].deviceId], sn, cn);
-							var dp = options[type].dp;
-							if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
-								data.status[mode][floor][sn + '/' + cn] = {
-									'value' : data.actuators[sn].channels[cn].datapoints[dp]
-								};
-								if (options[deviceTypes[data.actuators[sn].deviceId]].infos) {
-									data.status[mode][floor][sn + '/' + cn].infos = {};
-									var names = Object.keys(options[type].infos);
-									for (var i = 0; i < names.length; i++) {
-										if (typeof data.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
-											var value = data.actuators[sn].channels[cn].datapoints[names[i]];
-											var name = options[type].infos[names[i]];
-											if (name.substr(0, 2) == 'x-') {
-												if (type == 'shutter') {
-													if (name == 'x-angle') {
-														// use custom calibration for "nearly-closed" state
-														// i.e. when a little bit of light shines through the slots in the shutters
-														var dark = buttonData.extra;
-														var runtime = data.actuators[sn].channels[cn].datapoints['pm0001'];
-														var realTime = runtime - dark;
-														var offset = realTime / runtime;
-														var currentValue = data.status[mode][floor][sn + '/' + cn].value;
+						if (buttonData) {
+							var sn = buttonData.sn;
+							var cn = buttonData.cn;
+							if (data.actuators[sn] && data.actuators[sn].channels && data.actuators[sn].channels[cn]) {
+								var type = _typeHelper(data.actuators, deviceTypes[data.actuators[sn].deviceId], sn, cn);
+								var dp = options[type].dp;
+								if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
+									data.status[mode][floor][sn + '/' + cn] = {
+										'value' : data.actuators[sn].channels[cn].datapoints[dp]
+									};
+									if (options[deviceTypes[data.actuators[sn].deviceId]].infos) {
+										data.status[mode][floor][sn + '/' + cn].infos = {};
+										var names = Object.keys(options[type].infos);
+										for (var i = 0; i < names.length; i++) {
+											if (typeof data.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
+												var value = data.actuators[sn].channels[cn].datapoints[names[i]];
+												var name = options[type].infos[names[i]];
+												if (name.substr(0, 2) == 'x-') {
+													if (type == 'shutter') {
+														if (name == 'x-angle') {
+															// use custom calibration for "nearly-closed" state
+															// i.e. when a little bit of light shines through the slots in the shutters
+															var dark = buttonData.extra;
+															var runtime = data.actuators[sn].channels[cn].datapoints['pm0001'];
+															var realTime = runtime - dark;
+															var offset = realTime / runtime;
+															var currentValue = data.status[mode][floor][sn + '/' + cn].value;
 													
-														var currentTime = runtime * (currentValue / 100);
-														if (currentTime < realTime) {
-															value = 0;
-														} else {
-															var over = currentTime - realTime;
-															value = over / dark * 100;
-														}
+															var currentTime = runtime * (currentValue / 100);
+															if (currentTime < realTime) {
+																value = 0;
+															} else {
+																var over = currentTime - realTime;
+																value = over / dark * 100;
+															}
 													
-														var realValue = currentValue / offset;
-														data.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
-													} else if (name == 'x-fullclosed') {
-														value = data.structure[mode].floors[floor].buttons[button].extra * 1000;
+															var realValue = currentValue / offset;
+															data.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
+														} else if (name == 'x-fullclosed') {
+															value = data.structure[mode].floors[floor].buttons[button].extra * 1000;
+														}
+													} else if (type == 'thermostat') {
+														if (name == 'x-set') {
+															value = 21 + parseFloat(data.actuators[sn].channels[cn].datapoints['odp0003']);
+															if (data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+																// show the real eco target temperature
+																value = value - parseFloat(data.actuators[sn].channels[cn].datapoints['pm0000']);
+															}
+															if (data.actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
+																// off
+																value = 0;
+															}
+														} else if (name == 'x-heat') {
+															value = data.actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
+														} else if (name == 'x-on') {
+															value = data.actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
+														} else if (name == 'x-eco') {
+															value = false;
+															if ((data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 || data.actuators[sn].channels[cn].datapoints['odp0008'] == 36) && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+																value = true;
+															}
+														}
 													}
-												} else if (type == 'thermostat') {
-													if (name == 'x-set') {
-														value = 21 + parseFloat(data.actuators[sn].channels[cn].datapoints['odp0003']);
-														if (data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
-															// show the real eco target temperature
-															value = value - parseFloat(data.actuators[sn].channels[cn].datapoints['pm0000']);
-														}
-														if (data.actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
-															// off
-															value = 0;
-														}
-													} else if (name == 'x-heat') {
-														value = data.actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
-													} else if (name == 'x-on') {
-														value = data.actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
-													} else if (name == 'x-eco') {
-														value = false;
-														if ((data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 || data.actuators[sn].channels[cn].datapoints['odp0008'] == 36) && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
-															value = true;
-														}
-													}
+													name = name.substr(2);
 												}
-												name = name.substr(2);
+												data.status[mode][floor][sn + '/' + cn].infos[name] = value;
 											}
-											data.status[mode][floor][sn + '/' + cn].infos[name] = value;
 										}
 									}
 								}
