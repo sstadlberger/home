@@ -121,11 +121,15 @@ var parse = function (type, serialnumber, channel, action, value) {
 			return 'actuator "' + serialnumber + '" (' + actuators[serialnumber].typeName + ') is not of type "' + type + '"';
 		}
 	}
+	var id = serialnumber;
+	if (type == 'scene') {
+		serialnumber = actuators[serialnumber].serialNumber;
+	}
 	
 	var datapoint = Object.keys(commands[type].actions[action])[0];
 	var value = commands[type].actions[action][datapoint];
 	set(serialnumber, channel, datapoint, value);
-	return 'set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' (' + actuators[serialnumber].typeName + ') to ' + action + ': ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value;
+	return 'set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' (' + actuators[id].typeName + ') to ' + action + ': ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value;
 }
 
 /**
