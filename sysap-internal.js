@@ -15,7 +15,8 @@ var deviceTypes = {
 	'101C': 'dimmer',
 	'B001': 'shutter',
 	'1013': 'shutter',
-	'9004': 'thermostat'
+	'9004': 'thermostat',
+	'4800': 'scene'
 };
 var options = {
 	'switch': {
@@ -319,31 +320,52 @@ var response = function (stanza, data) {
 					var sn = helper.ltx.getAttr(device, 'serialNumber');
 					var deviceId = helper.ltx.getAttr(device, 'deviceId');
 					if (sn) {
-						var nameId = helper.ltx.getAttr(device, 'nameId');
-						data.actuators[sn] = {
-							serialNumber: sn,
-							deviceId: deviceId,
-							typeName: data.strings[nameId],
-							channels: {}
-						};
-						helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
-							var cn = helper.ltx.getAttr(channel, 'i');
-							if (cn) {
-								data.actuators[sn]['channels'][cn] = {
-									datapoints: {}
-								};
-								['inputs', 'outputs', 'parameters'].forEach(function (put) {
-									['dataPoint', 'parameter'].forEach(function (name) {
-										helper.ltx.getElements(channel, [put, name]).forEach(function (dataPoint) {
-											var dp = helper.ltx.getAttr(dataPoint, 'i');
-											if (dp) {
-												data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
-											}
+						var typeName = data.strings[nameId];
+						var serialNumber = sn;
+						var valid = true;
+						if (sn.substring(0, 4) == 'FFFF') {
+							// Scene
+							helper.ltx.getElements(device, ['channels', 'channel', 'attribute']).forEach(function (attribute) {
+								// Scene needs a valid name as identifer
+								if (helper.ltx.getAttr(attribute, 'name') == 'displayName') {
+									var name = helper.ltx.getText(attribute);
+									typeName = 'Scene: ' + name;
+									name = name.replace(/\s+/g, '');
+									sn = 'SCENE' + name;
+									if (name == '' || data.actuators[sn]) {
+										helper.log.warn('scene ' + serialNumber + ' was not added because the name was not unique: ' + sn);
+										valid = false;
+									}
+								}
+							});
+						}
+						if (valid) {
+							var nameId = helper.ltx.getAttr(device, 'nameId');
+							data.actuators[sn] = {
+								serialNumber: serialNumber,
+								deviceId: deviceId,
+								typeName: typeName,
+								channels: {}
+							};
+							helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+								var cn = helper.ltx.getAttr(channel, 'i');
+								if (cn) {
+									data.actuators[sn]['channels'][cn] = {
+										datapoints: {}
+									};
+									['inputs', 'outputs', 'parameters'].forEach(function (put) {
+										['dataPoint', 'parameter'].forEach(function (name) {
+											helper.ltx.getElements(channel, [put, name]).forEach(function (dataPoint) {
+												var dp = helper.ltx.getAttr(dataPoint, 'i');
+												if (dp) {
+													data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
+												}
+											});
 										});
 									});
-								});
-							}
-						});
+								}
+							});
+						}
 					}
 				});
 				
