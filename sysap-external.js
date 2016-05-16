@@ -131,16 +131,16 @@ var parse = function (type, serialnumber, channel, action, value) {
  * @param {string} value - the value to set the datapoint to
  */
 var set = function (serialnumber, channel, datapoint, value) {
-	var data = data.getData('actuators');
+	var d = data.getData('actuators');
 	if (value == 'x') {
-		if (data[serialnumber].deviceId == '9004') {
+		if (d[serialnumber].deviceId == '9004') {
 			// thermostat
-			var current = data[serialnumber].channels[channel].datapoints['odp0006'];
+			var current = d[serialnumber].channels[channel].datapoints['odp0006'];
 			value = current == 1 ? 0 : 1;
 		} else {
 			// default: the idp and opd have the same id, so it's possible to just switch the 'i' and 'o'
 			var look = 'o' + datapoint.substr(1);
-			var current = data[serialnumber].channels[channel].datapoints[look];
+			var current = d[serialnumber].channels[channel].datapoints[look];
 			value = current == 1 ? 0 : 1;
 		}
 	} else if (typeof value === 'string' && value.substr(0, 2) == 'x-') {
@@ -150,8 +150,8 @@ var set = function (serialnumber, channel, datapoint, value) {
 		// odp0000 = 2: moving up
 		value = value.substr(2);
 		if (
-			(data[serialnumber].channels[channel].datapoints['odp0000'] == 2 && value == 0) ||
-			(data[serialnumber].channels[channel].datapoints['odp0000'] == 3 && value == 1)
+			(d[serialnumber].channels[channel].datapoints['odp0000'] == 2 && value == 0) ||
+			(d[serialnumber].channels[channel].datapoints['odp0000'] == 3 && value == 1)
 		) {
 			datapoint = 'idp0001';
 			value = 1;
@@ -165,12 +165,12 @@ var set = function (serialnumber, channel, datapoint, value) {
 		value = value.substr(2);
 		setTimeout(function () {
 			set(serialnumber, channel, 'idp0001', 1)
-		}, 200 + parseInt(data[serialnumber].channels[channel].datapoints['pm0006']));
+		}, 200 + parseInt(d[serialnumber].channels[channel].datapoints['pm0006']));
 	} else if (typeof value === 'string' && (value.substr(0, 1) == '-' || value.substr(0, 1) == '+')) {
 		// rise or lower set temperature by x degrees
 		var changeValue = parseFloat(value.substr(1)) * (value.substr(0, 1) == '-' ? -1 : 1);
 		// value is set as difference to 21°C
-		value = parseFloat(data[serialnumber].channels[channel].datapoints['odp0002']) + changeValue - 21;
+		value = parseFloat(d[serialnumber].channels[channel].datapoints['odp0002']) + changeValue - 21;
 	}
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',
