@@ -2,11 +2,10 @@ var xmpp_client = require('node-xmpp-client');
 var fs = require('fs');
 var config = require('./config.js');
 var helper = require('./helper.js');
+var data = require('./data.js');
 var sysap_internal = require('./sysap-internal.js');
 var sysap_external = require('./sysap-external.js');
 
-// this set of vars contains/will contain the master status
-var data = JSON.parse(fs.readFileSync('./data.json', 'utf8'));;
 var count = 0;
 var lastping;
 var subscribed = false;
@@ -37,8 +36,8 @@ sysap.on('stanza', function(stanza) {
 		helper.ltx.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
 		helper.log.debug('update packet received');
-		sysap_internal.update(stanza, data);
-		sysap_internal.status(data);
+		sysap_internal.update(stanza, data.data);
+		sysap_internal.status(data.data);
 	
 	
 	// MASTER STATUS UPDATE
@@ -50,8 +49,8 @@ sysap.on('stanza', function(stanza) {
 			helper.log.trace('ping result packet received');
 		} else {
 			helper.log.debug('result packet received');
-			sysap_internal.response(stanza, data);
-			sysap_internal.status(data);
+			sysap_internal.response(stanza, data.data);
+			sysap_internal.status(data.data);
 		}
 	
 	} else if (stanza.getName() == 'presence') {
@@ -94,28 +93,6 @@ function keepAlive () {
 	setTimeout(keepAlive, 10 * 1000);
 }
 
-var setDP = function (sn, cn, dp, value) {
-	if (!data.actuators[sn]) {
-		data.actuators[sn] = {
-			'serialNumber': sn,
-			'channels': {}
-		};
-	}
-	if (!data.actuators[sn]['channels']) {
-		data.actuators[sn]['channels'] = {};
-	}
-	if (!data.actuators[sn]['channels'][cn]) {
-		data.actuators[sn]['channels'][cn] = {
-			'datapoints': {}
-		};
-	}
-	data.actuators[sn]['channels'][cn]['datapoints'][dp] = value;
-	sysap_internal.status(data);
-}
-
-Object.assign(module.exports, { 'getData': function (what) { return data[what]; } });
-Object.assign(module.exports, { 'setDP': setDP });
-Object.assign(module.exports, { 'setStructure': function (structure) { data.structure = structure; } });
-Object.assign(module.exports, { 'sysap': sysap });
-
 sysap_internal.updateStructure(false);
+
+module.exports.sysap = sysap;

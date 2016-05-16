@@ -1,17 +1,8 @@
 var xmpp_client = require('node-xmpp-client');
 var helper = require('./helper.js');
+var data = require('./data.js');
 var sysap_internal = require('./sysap-internal.js');
 var sysap = require('./sysap.js');
-
-
-/**
- * returns a part of the master data structure
- * @param {string} what - valid values are house, actuators and strings for the respective sub-objects
- * @returns {Object} requested part of the master data object
- */
-var info = function (what) {
-	return sysap.getData(what);
-};
 
 /**
  * translates a human readable request into the actual knx commands and calls the "real" set-functions
@@ -98,7 +89,7 @@ var parse = function (type, serialnumber, channel, action, value) {
 			}
 		}
 	}
-	var actuators = info('actuators');
+	var actuators = data.getData('actuators');
 	
 	// error checks
 	if (!commands[type]) {
@@ -140,7 +131,7 @@ var parse = function (type, serialnumber, channel, action, value) {
  * @param {string} value - the value to set the datapoint to
  */
 var set = function (serialnumber, channel, datapoint, value) {
-	var data = info('actuators');
+	var data = data.getData('actuators');
 	if (value == 'x') {
 		if (data[serialnumber].deviceId == '9004') {
 			// thermostat
@@ -223,7 +214,6 @@ var setDP = function (sn, cn, dp, value) {
 	sysap.setDP(sn, cn, dp, value);
 }
 
-module.exports.info = info;
 module.exports.parse = parse;
 module.exports.set = set;
 module.exports.updateStructure = updateStructure;

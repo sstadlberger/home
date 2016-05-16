@@ -2,35 +2,36 @@ var express = require('express');
 var cors = require('cors');
 var http = express();
 var sysap_external = require('./sysap-external.js');
+var data = require('./data.js');
 var helper = require('./helper.js');
 
 http.use(cors());
 
 http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
-	var data = sysap_external.info('actuators');
-	if (req.params.serialnumber && data[req.params.serialnumber]) {
-		data = data[req.params.serialnumber];
-		if (req.params.channel && data.channels[req.params.channel]) {
-			data = data.channels[req.params.channel];
-			if (req.params.datapoint && data.datapoints[req.params.datapoint]) {
-				data = data.datapoints[req.params.datapoint];
+	var d = data.getData('actuators');
+	if (req.params.serialnumber && d[req.params.serialnumber]) {
+		d = d[req.params.serialnumber];
+		if (req.params.channel && d.channels[req.params.channel]) {
+			d = d.channels[req.params.channel];
+			if (req.params.datapoint && d.datapoints[req.params.datapoint]) {
+				d = d.datapoints[req.params.datapoint];
 			}
 		}
 	}
 	helper.log.debug('web get info call');
-	res.json(data);
+	res.json(d);
 });
 
 http.get('/structure/:mode?/:floor*?', function (req, res) {
-	var data = sysap_external.info('external');
-	if (req.params.mode && data[req.params.mode]) {
-		data = data[req.params.mode];
-		if (req.params.floor && data[req.params.floor]) {
-			data = data[req.params.floor];
+	var d = data.getData('external');
+	if (req.params.mode && d[req.params.mode]) {
+		d = d[req.params.mode];
+		if (req.params.floor && d[req.params.floor]) {
+			d = d[req.params.floor];
 		}
 	}
 	helper.log.debug('web get external call');
-	res.json(data);
+	res.json(d);
 });
 
 http.get('/legacy', function (req, res) {
@@ -62,7 +63,7 @@ http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 
 http.get('/input/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 	helper.log.debug('input raw data: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
-	sysap_external.setDP(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
+	data.setDP(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	res.set('Connection', 'close');
 	res.send('OK');
 	res.end();

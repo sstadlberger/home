@@ -1,9 +1,10 @@
 var xmpp_client = require('node-xmpp-client');
 var ltx = require('ltx');
+var sysap = require('./sysap.js');
 var helper = require('./helper.js');
 var config = require('./config.js');
 var websocket = require('./socketapi.js');
-var sysap = require('./sysap.js');
+var data = require('./data.js');
 var fs = require('fs');
 var util = require('util');
 
@@ -485,7 +486,7 @@ var status = function (data) {
 }
 
 var updateStructure = function (broadcast) {
-	var actuators = sysap.getData('actuators');
+	var actuators = data.getData('actuators');
 	var loadedStructure = JSON.parse(fs.readFileSync('./structure.json', 'utf8'));
 	var structure = [];
 	for (var mode = 0; mode < loadedStructure.length; mode++) {
@@ -526,7 +527,7 @@ var updateStructure = function (broadcast) {
 	}
 	helper.log.info('structure for interface updated');
 	helper.log.trace(util.inspect(structure, {showHidden: false, depth: null}));
-	sysap.setStructure(structure);
+	data.setStructure(structure);
 	if (broadcast) {
 		websocket.broadcast(JSON.stringify({'structure': structure}));
 	}

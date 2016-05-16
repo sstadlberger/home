@@ -1,5 +1,6 @@
 var nodejsWebsocket = require('nodejs-websocket');
 var sysap_external = require('./sysap-external.js');
+var data = require('./data.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
@@ -65,12 +66,12 @@ function set (data, conn) {
 			break;
 		
 		case 'status':
-			var status = sysap_external.info('status');
+			var status = data.getData('status');
 			conn.sendText(JSON.stringify({'status': status}));
 			break;
 		
 		case 'structure':
-			var structure = sysap_external.info('structure');
+			var structure = data.getData('structure');
 			conn.sendText(JSON.stringify({'structure': structure}));
 			break;
 		
