@@ -40,28 +40,28 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 	})
 }).listen(8001);
 
-function set (data, conn) {
-	var command = data.shift();
+function set (d, conn) {
+	var command = d.shift();
 	switch (command) {
 		case 'set':
-			if (data.length == 4 || data.length == 5) {
-				helper.log.debug('set channel ' + data[2] + ' of ' + data[0] + ' ' + data[1] + ' to ' + data[3] + (data.length == 5 ? ' (' + data[4] + ')' : ''));
-				var status = sysap_external.parse(data[0], data[1], data[2], data[3], (data.length == 5 ? data[4] : null));
+			if (d.length == 4 || d.length == 5) {
+				helper.log.debug('set channel ' + d[2] + ' of ' + d[0] + ' ' + d[1] + ' to ' + d[3] + (d.length == 5 ? ' (' + d[4] + ')' : ''));
+				var status = sysap_external.parse(d[0], d[1], d[2], d[3], (d.length == 5 ? d[4] : null));
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
-				conn.sendText(JSON.stringify({'error': 'invalid set command: ' + data.join('/')}));
-				helper.log.error('invalid set command: ' + data.join('/'));
+				conn.sendText(JSON.stringify({'error': 'invalid set command: ' + d.join('/')}));
+				helper.log.error('invalid set command: ' + d.join('/'));
 			}
 			break;
 			
 		case 'raw':
-			if (data.length == 4) {
-				helper.log.debug('raw set: ' + data[0] + '/' + data[1] + '/' + data[2] + ': ' + data[3]);
-				var status = sysap_external.set(data[0], data[1], data[2], data[3]);
+			if (d.length == 4) {
+				helper.log.debug('raw set: ' + d[0] + '/' + d[1] + '/' + d[2] + ': ' + d[3]);
+				var status = sysap_external.set(d[0], d[1], d[2], d[3]);
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
-				conn.sendText(JSON.stringify({'error': 'invalid raw command: ' + data.join('/')}));
-				helper.log.error('invalid raw command: ' + data.join('/'));
+				conn.sendText(JSON.stringify({'error': 'invalid raw command: ' + d.join('/')}));
+				helper.log.error('invalid raw command: ' + d.join('/'));
 			}
 			break;
 		
@@ -76,7 +76,7 @@ function set (data, conn) {
 			break;
 		
 		case 'update':
-			if (data.length == 1 && data[0] == 'all') {
+			if (d.length == 1 && d[0] == 'all') {
 				sysap_external.updateAll();
 				conn.sendText(JSON.stringify({'result': 'requested master update'}));
 			} else {
@@ -86,8 +86,8 @@ function set (data, conn) {
 			break;
 			
 		case 'loglevel':
-			if (data.length == 1) {
-				var newLoglevel = data[0];
+			if (d.length == 1) {
+				var newLoglevel = d[0];
 				var valid = Object.keys(helper.log.loglevel);
 				if (valid.indexOf(newLoglevel) == -1) {
 					conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + newLoglevel}));
@@ -98,8 +98,8 @@ function set (data, conn) {
 					helper.log.info('loglevel set to ' + newLoglevel);
 				}
 			} else {
-				conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + data.join(' ')}));
-				helper.log.error('invaild loglevel command: ' + data.join('/'));
+				conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + d.join(' ')}));
+				helper.log.error('invaild loglevel command: ' + d.join('/'));
 			}
 			break;
 			
