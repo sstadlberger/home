@@ -14,4 +14,8 @@ config.websocket = {
 	password: 'PASSWORD'
 };
 
+config.weather = {
+	url: 'https://api.forecast.io/forecast/APIKEY/LAT,LONG?units=si&lang=de'
+};
+
 module.exports = config;

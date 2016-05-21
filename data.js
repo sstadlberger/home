@@ -32,11 +32,11 @@ var getData = function (what) {
 	return data[what];
 }
 
-var setStructure = function (structure) {
-	data.structure = structure;
+var setData = function (what, whatData) {
+	data[what] = whatData;
 }
 
 module.exports.data = data;
 module.exports.setDP = setDP;
 module.exports.getData = getData;
-module.exports.setStructure = setStructure;
+module.exports.setData = setData;

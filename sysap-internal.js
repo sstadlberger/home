@@ -527,7 +527,7 @@ var updateStructure = function (broadcast) {
 	}
 	helper.log.info('structure for interface updated');
 	helper.log.trace(util.inspect(structure, {showHidden: false, depth: null}));
-	data.setStructure(structure);
+	data.setData('structure', structure);
 	if (broadcast) {
 		websocket.broadcast(JSON.stringify({'structure': structure}));
 	}

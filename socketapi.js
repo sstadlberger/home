@@ -4,7 +4,7 @@ var data = require('./data.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
-var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel'];
+var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'weather'];
 
 var socket = nodejsWebsocket.createServer(function (conn) {
 	helper.log.info('websocket started');
@@ -32,6 +32,9 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 				break;
 			case 'ETIMEDOUT':
 				helper.log.error('where has the client gone? (ETIMEDOUT)');
+				break;
+			case 'EHOSTDOWN':
+				helper.log.error('where has the client gone? (EHOSTDOWN)');
 				break;
 			default:
 				helper.log.error(err.code);
@@ -63,6 +66,11 @@ function set (d, conn) {
 				conn.sendText(JSON.stringify({'error': 'invalid raw command: ' + d.join('/')}));
 				helper.log.error('invalid raw command: ' + d.join('/'));
 			}
+			break;
+		
+		case 'weather':
+			var weather = data.getData('weather');
+			conn.sendText(JSON.stringify({'weather': weather}));
 			break;
 		
 		case 'status':

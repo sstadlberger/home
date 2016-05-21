@@ -1,10 +1,11 @@
 {
-	'house': {
-		'floor': {},
-		'room': {}
+	"house": {
+		"floor": {},
+		"room": {}
 	},
-	'actuators': {},
-	'strings': {},
-	'status': [],
-	'structure': []
+	"actuators": {},
+	"strings": {},
+	"status": [],
+	"structure": [],
+	"weather": {}
 }
