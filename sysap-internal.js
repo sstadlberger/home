@@ -183,7 +183,7 @@ var presence = function (stanza) {
  * @param {Object} stanza - a node-xmpp-client xml data packet
  * @param {Object} data - the master data object
  */
-var update = function (stanza, data) {
+var update = function (stanza, d) {
 
 	helper.ltx.getElements(stanza, ['event', 'items', 'item']).forEach(function (item) {
 		
@@ -197,7 +197,7 @@ var update = function (stanza, data) {
 				
 				// is a valid device and init is completed
 				var sn = helper.ltx.getAttr(device, 'serialNumber');
-				if (sn && sn != '' && data.actuators[sn]) {
+				if (sn && sn != '' && d.actuators[sn]) {
 				
 					// valid update packet that is of interest
 					if (helper.ltx.getAttr(device, 'commissioningState') == 'ready') {
@@ -207,8 +207,8 @@ var update = function (stanza, data) {
 							var cn = helper.ltx.getAttr(channel, 'i');
 							if (cn) {
 								channel.children.forEach(function (dp) {
-									if (!data.actuators[sn]['channels'][cn]) {
-										data.actuators[sn]['channels'][cn] = {
+									if (!d.actuators[sn]['channels'][cn]) {
+										d.actuators[sn]['channels'][cn] = {
 											datapoints: {}
 										};
 									}
@@ -216,7 +216,7 @@ var update = function (stanza, data) {
 										var pt = helper.ltx.getAttr(datapoint, 'i');
 										var vl = helper.ltx.getElementText(datapoint, ['value']);
 										if (pt && vl) {
-											data.actuators[sn].channels[cn].datapoints[pt] = vl;
+											d.actuators[sn].channels[cn].datapoints[pt] = vl;
 										}
 									});
 								});
@@ -234,7 +234,7 @@ var update = function (stanza, data) {
  * @param {Object} stanza - a node-xmpp-client xml data packet
  * @param {Object} data - the master data object
  */
-var response = function (stanza, data) {
+var response = function (stanza, d) {
 	helper.ltx.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
 		
 		helper.ltx.getElements(param, ['value', 'boolean']).forEach(function (value) {
@@ -310,13 +310,13 @@ var response = function (stanza, data) {
 				helper.ltx.getElements(allData, ['entities', 'entity']).forEach(function (entity) {
 					var entityData = JSON.parse(entity.getText());
 					if (entity.attrs.type == 'floor' || entity.attrs.type == 'room') {
-						data.house[entity.attrs.type][entity.attrs.uid] = entityData.name;
+						d.house[entity.attrs.type][entity.attrs.uid] = entityData.name;
 					}
 				});
 			
 				// strings
 				helper.ltx.getElements(allData, ['strings', 'string']).forEach(function (string) {
-					data.strings[string.attrs.nameId] = string.getText();
+					d.strings[string.attrs.nameId] = string.getText();
 				});
 			
 				// actuators
@@ -325,7 +325,7 @@ var response = function (stanza, data) {
 					var sn = helper.ltx.getAttr(device, 'serialNumber');
 					var deviceId = helper.ltx.getAttr(device, 'deviceId');
 					if (sn) {
-						var typeName = data.strings[nameId];
+						var typeName = d.strings[nameId];
 						var serialNumber = sn;
 						var valid = true;
 						if (sn.substring(0, 4) == 'FFFF') {
@@ -337,7 +337,7 @@ var response = function (stanza, data) {
 									typeName = 'Scene: ' + name;
 									name = name.replace(/\s+/g, '');
 									sn = 'SCENE' + name;
-									if (name == '' || data.actuators[sn]) {
+									if (name == '' || d.actuators[sn]) {
 										helper.log.warn('scene ' + serialNumber + ' was not added because the name was not unique: ' + sn);
 										valid = false;
 									}
@@ -346,7 +346,7 @@ var response = function (stanza, data) {
 						}
 						if (valid) {
 							var nameId = helper.ltx.getAttr(device, 'nameId');
-							data.actuators[sn] = {
+							d.actuators[sn] = {
 								serialNumber: serialNumber,
 								deviceId: deviceId,
 								typeName: typeName,
@@ -355,7 +355,7 @@ var response = function (stanza, data) {
 							helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
 								var cn = helper.ltx.getAttr(channel, 'i');
 								if (cn) {
-									data.actuators[sn]['channels'][cn] = {
+									d.actuators[sn]['channels'][cn] = {
 										datapoints: {}
 									};
 									['inputs', 'outputs', 'parameters'].forEach(function (put) {
@@ -363,7 +363,7 @@ var response = function (stanza, data) {
 											helper.ltx.getElements(channel, [put, name]).forEach(function (dataPoint) {
 												var dp = helper.ltx.getAttr(dataPoint, 'i');
 												if (dp) {
-													data.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
+													d.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
 												}
 											});
 										});
@@ -390,86 +390,93 @@ var response = function (stanza, data) {
  * @param {Object} data - the master data object
  * @param {Object} structure - the data structure of the front-end
  */
-var status = function (data) {
-	data.status = [];
-	for (var mode = 0; mode < data.structure.length; mode++) {
-		data.status[mode] = [];
-		if (data.structure[mode].floors) {
-			for (var floor = 0; floor < data.structure[mode].floors.length; floor++) {
-				data.status[mode][floor] = {};
-				if (data.structure[mode].floors[floor].buttons) {
-					for (var button = 0; button < data.structure[mode].floors[floor].buttons.length; button++) {
-						var buttonData = data.structure[mode].floors[floor].buttons[button];
+var status = function (d) {
+	d.status = [];
+	var structure = [];
+	var shortcuts = [];
+	Object.assign(structure, d.structure.structure);
+	Object.assign(shortcuts, d.structure.shortcuts);
+	structure.push({'floors': [{'buttons': shortcuts}]});
+	for (var mode = 0; mode < structure.length; mode++) {
+		d.status[mode] = [];
+		if (structure[mode].floors) {
+			for (var floor = 0; floor < structure[mode].floors.length; floor++) {
+				d.status[mode][floor] = {};
+				if (structure[mode].floors[floor].buttons) {
+					for (var button = 0; button < structure[mode].floors[floor].buttons.length; button++) {
+						var buttonData = structure[mode].floors[floor].buttons[button];
 						if (buttonData) {
 							var sn = buttonData.sn;
 							var cn = buttonData.cn;
-							if (data.actuators[sn] && data.actuators[sn].channels && data.actuators[sn].channels[cn]) {
-								var type = _typeHelper(data.actuators, deviceTypes[data.actuators[sn].deviceId], sn, cn);
+							if (d.actuators[sn] && d.actuators[sn].channels && d.actuators[sn].channels[cn]) {
+								var type = _typeHelper(d.actuators, deviceTypes[d.actuators[sn].deviceId], sn, cn);
 								var dp = options[type].dp;
-								if (data.actuators[sn].channels[cn] && data.actuators[sn].channels[cn].datapoints[dp] != undefined) {
-									var value = data.actuators[sn].channels[cn].datapoints[dp];
+								if (d.actuators[sn].channels[cn] && d.actuators[sn].channels[cn].datapoints[dp] != undefined) {
+									var value = d.actuators[sn].channels[cn].datapoints[dp];
 									if (type == 'thermostat') {
 										value = Math.round(value * 10) / 10;
 									}
-									data.status[mode][floor][sn + '/' + cn] = {
+									d.status[mode][floor][sn + '/' + cn] = {
 										'value' : value
 									};
-									if (options[deviceTypes[data.actuators[sn].deviceId]].infos) {
-										data.status[mode][floor][sn + '/' + cn].infos = {};
+									if (options[deviceTypes[d.actuators[sn].deviceId]].infos) {
+										d.status[mode][floor][sn + '/' + cn].infos = {};
 										var names = Object.keys(options[type].infos);
 										for (var i = 0; i < names.length; i++) {
-											if (typeof data.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
-												var value = data.actuators[sn].channels[cn].datapoints[names[i]];
+											if (typeof d.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
+												var value = d.actuators[sn].channels[cn].datapoints[names[i]];
 												var name = options[type].infos[names[i]];
 												if (name.substr(0, 2) == 'x-') {
 													if (type == 'shutter') {
-														if (name == 'x-angle') {
-															// use custom calibration for "nearly-closed" state
-															// i.e. when a little bit of light shines through the slots in the shutters
-															var dark = buttonData.extra;
-															var runtime = data.actuators[sn].channels[cn].datapoints['pm0001'];
-															var realTime = runtime - dark;
-															var offset = realTime / runtime;
-															var currentValue = data.status[mode][floor][sn + '/' + cn].value;
+														if (structure[mode].floors[floor].buttons[button].extra != 'single') {
+															if (name == 'x-angle') {
+																// use custom calibration for "nearly-closed" state
+																// i.e. when a little bit of light shines through the slots in the shutters
+																var dark = buttonData.extra;
+																var runtime = d.actuators[sn].channels[cn].datapoints['pm0001'];
+																var realTime = runtime - dark;
+																var offset = realTime / runtime;
+																var currentValue = d.status[mode][floor][sn + '/' + cn].value;
 													
-															var currentTime = runtime * (currentValue / 100);
-															if (currentTime < realTime) {
-																value = 0;
-															} else {
-																var over = currentTime - realTime;
-																value = over / dark * 100;
+																var currentTime = runtime * (currentValue / 100);
+																if (currentTime < realTime) {
+																	value = 0;
+																} else {
+																	var over = currentTime - realTime;
+																	value = over / dark * 100;
+																}
+													
+																var realValue = currentValue / offset;
+																d.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
+															} else if (name == 'x-fullclosed') {
+																value = structure[mode].floors[floor].buttons[button].extra * 1000;
 															}
-													
-															var realValue = currentValue / offset;
-															data.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
-														} else if (name == 'x-fullclosed') {
-															value = data.structure[mode].floors[floor].buttons[button].extra * 1000;
 														}
 													} else if (type == 'thermostat') {
 														if (name == 'x-set') {
-															value = 21 + parseFloat(data.actuators[sn].channels[cn].datapoints['odp0003']);
-															if (data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															value = 21 + parseFloat(d.actuators[sn].channels[cn].datapoints['odp0003']);
+															if (d.actuators[sn].channels[cn].datapoints['odp0008'] == 68 && d.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
 																// show the real eco target temperature
-																value = value - parseFloat(data.actuators[sn].channels[cn].datapoints['pm0000']);
+																value = value - parseFloat(d.actuators[sn].channels[cn].datapoints['pm0000']);
 															}
-															if (data.actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
+															if (d.actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
 																// off
 																value = 0;
 															}
 														} else if (name == 'x-heat') {
-															value = data.actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
+															value = d.actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
 														} else if (name == 'x-on') {
-															value = data.actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
+															value = d.actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
 														} else if (name == 'x-eco') {
 															value = false;
-															if ((data.actuators[sn].channels[cn].datapoints['odp0008'] == 68 || data.actuators[sn].channels[cn].datapoints['odp0008'] == 36) && data.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															if ((d.actuators[sn].channels[cn].datapoints['odp0008'] == 68 || d.actuators[sn].channels[cn].datapoints['odp0008'] == 36) && d.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
 																value = true;
 															}
 														}
 													}
 													name = name.substr(2);
 												}
-												data.status[mode][floor][sn + '/' + cn].infos[name] = value;
+												d.status[mode][floor][sn + '/' + cn].infos[name] = value;
 											}
 										}
 									}
@@ -482,12 +489,14 @@ var status = function (data) {
 		}
 	}
 	helper.log.debug('status for interface updated');
-	websocket.broadcast(JSON.stringify({'status': data.status}));
+	websocket.broadcast(JSON.stringify({'status': d.status}));
 }
 
 var updateStructure = function (broadcast) {
+	var loadedMain = JSON.parse(fs.readFileSync('./structure.json', 'utf8'));
 	var actuators = data.getData('actuators');
-	var loadedStructure = JSON.parse(fs.readFileSync('./structure.json', 'utf8'));
+	
+	var loadedStructure = loadedMain.structure;
 	var structure = [];
 	for (var mode = 0; mode < loadedStructure.length; mode++) {
 		structure[mode] = {};
@@ -504,40 +513,69 @@ var updateStructure = function (broadcast) {
 				if (loadedStructure[mode].floors[floor].buttons) {
 					for (var button = 0; button < loadedStructure[mode].floors[floor].buttons.length; button++) {
 						var currentButton = loadedStructure[mode].floors[floor].buttons[button];
-						var sn = currentButton.serialnumber;
-						var cn = currentButton.channel;
-						if (actuators[sn]) {
-							structure[mode].floors[floor].buttons[button] = {};
-							structure[mode].floors[floor].buttons[button].x = currentButton.x;
-							structure[mode].floors[floor].buttons[button].y = currentButton.y;
-							structure[mode].floors[floor].buttons[button].iconOn = currentButton.iconOn;
-							structure[mode].floors[floor].buttons[button].iconOff = currentButton.iconOff;
-							structure[mode].floors[floor].buttons[button].sn = sn;
-							structure[mode].floors[floor].buttons[button].cn = cn;
-							structure[mode].floors[floor].buttons[button].type = _typeHelper(actuators, deviceTypes[actuators[sn].deviceId], sn, cn);
-							structure[mode].floors[floor].buttons[button].name = currentButton.name;
-							if (typeof currentButton.extra !== undefined) {
-								structure[mode].floors[floor].buttons[button].extra = currentButton.extra;
-							}
+						if (actuators[currentButton.serialnumber]) {
+							structure[mode].floors[floor].buttons[button] = _buttonhelper(currentButton, actuators);
 						}
 					}
 				}
 			}
 		}
 	}
+	
+	var loadedShortcuts = loadedMain.shortcuts;
+	var shortcuts = [];
+	for (var sc = 0; sc < loadedShortcuts.length; sc++) {
+		if (actuators[loadedShortcuts[sc].serialnumber]) {
+			shortcuts.push(_buttonhelper(loadedShortcuts[sc], actuators));
+		}
+	}
+	
+	var main = {
+		'structure': structure, 
+		'shortcuts': shortcuts
+	};
+	
 	helper.log.info('structure for interface updated');
-	helper.log.trace(util.inspect(structure, {showHidden: false, depth: null}));
-	data.setData('structure', structure);
+	helper.log.trace(util.inspect(main, {showHidden: false, depth: null}));
+	data.setData('structure', main);
 	if (broadcast) {
-		websocket.broadcast(JSON.stringify({'structure': structure}));
+		websocket.broadcast(JSON.stringify({'structure': main}));
 	}
 }
 
-var _typeHelper = function (actuators, type, sn, ch) {
-	if (type == 'shutter') {
-		if (actuators[sn].channels[ch].datapoints['pm0002'] > 0) {
-			type = 'blind';
-		}
+var _buttonhelper = function (currentButton, actuators) {
+	var result = {};
+	var sn = currentButton.serialnumber;
+	var cn = currentButton.channel;
+	result = {};
+	result.x = currentButton.x;
+	result.y = currentButton.y;
+	result.iconOn = currentButton.iconOn;
+	result.iconOff = currentButton.iconOff;
+	result.sn = sn;
+	result.cn = cn;
+	result.type = _typeHelper(actuators, deviceTypes[actuators[sn].deviceId], sn, cn, currentButton.extra);
+	result.name = currentButton.name;
+	if (typeof currentButton.extra !== undefined) {
+		result.extra = currentButton.extra;
+	}
+	return result;
+}
+
+var _typeHelper = function (actuators, type, sn, ch, extra) {
+	switch (type) {
+		case 'shutter':
+			if (typeof extra !== undefined && extra == 'single') {
+				type = 'motor';
+			} else if (actuators[sn].channels[ch].datapoints['pm0002'] > 0) {
+				type = 'blind';
+			}
+			break;
+		case 'switch':
+			if (typeof extra !== undefined && extra == 'buzzer') {
+				type = 'buzzer';
+			}
+			break;
 	}
 	return type;
 }
