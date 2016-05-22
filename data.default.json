@@ -6,6 +6,9 @@
 	"actuators": {},
 	"strings": {},
 	"status": [],
-	"structure": [],
+	"structure": {
+		"structure": [],
+		"shortcuts": []
+	},
 	"weather": {}
 }
