@@ -1,11 +1,15 @@
 var express = require('express');
 var cors = require('cors');
+var bodyParser = require('body-parser');
 var http = express();
 var sysap_external = require('./sysap-external.js');
 var data = require('./data.js');
 var helper = require('./helper.js');
+var storage = require('./storage.js');
 
 http.use(cors());
+http.use(bodyParser.urlencoded({ extended: false }));
+http.use(bodyParser.json());
 
 http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 	var d = data.getData('actuators');
@@ -18,7 +22,7 @@ http.get('/info/:serialnumber?/:channel?/:datapoint*?', function (req, res) {
 			}
 		}
 	}
-	helper.log.debug('web get info call');
+	helper.log.debug('[' + req.connection.remoteAddress + '] web get info call');
 	res.json(d);
 });
 
@@ -30,7 +34,7 @@ http.get('/structure/:mode?/:floor*?', function (req, res) {
 			d = d[req.params.floor];
 		}
 	}
-	helper.log.debug('web get external call');
+	helper.log.debug('[' + req.connection.remoteAddress + '] web get external call');
 	res.json(d);
 });
 
@@ -41,7 +45,7 @@ http.get('/legacy', function (req, res) {
 	var channel = 'ch000' + req.query.channel;
 	var action = req.query.command;
 	
-	helper.log.debug('web legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
+	helper.log.debug('[' + req.connection.remoteAddress + '] web legacy set channel ' + channel + ' of ' + type + ' ' + serialnumber + ' to ' + action);
 	var status = sysap_external.parse(type, serialnumber, channel, action, null);
 	
 	res.header('Access-Control-Allow-Origin', '*');
@@ -50,23 +54,60 @@ http.get('/legacy', function (req, res) {
 });
 
 http.get('/set/:type/:serialnumber/:channel/:action/:value*?', function (req, res) {
-	helper.log.debug('web set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action + (req.params.value ? ' (' + req.params.value + ')' : ''));
+	helper.log.debug('[' + req.connection.remoteAddress + '] web set channel ' + req.params.channel + ' of ' + req.params.type + ' ' + req.params.serialnumber + ' to ' + req.params.action + (req.params.value ? ' (' + req.params.value + ')' : ''));
 	var status = sysap_external.parse(req.params.type, req.params.serialnumber, req.params.channel, req.params.action, (req.params.value ? req.params.value : null));
 	res.send(status);
 });
 
 http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
-	helper.log.debug('web raw set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
+	helper.log.debug('[' + req.connection.remoteAddress + '] web raw set: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 	sysap_external.set(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	res.send(req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 });
 
 http.get('/input/:serialnumber/:channel/:datapoint/:value', function (req, res) {
-	helper.log.debug('input raw data: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
+	helper.log.debug('[' + req.connection.remoteAddress + '] input raw data: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
 	data.setDP(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
 	res.set('Connection', 'close');
 	res.send('OK');
 	res.end();
+});
+
+http.get('/message', function (req, res) {
+	helper.log.info('[' + req.connection.remoteAddress + '] http message: ' + req.query.message);
+	res.set('Connection', 'close');
+	res.send('OK');
+	res.end();
+});
+
+http.post('/message', function (req, res) {
+	helper.log.info('[' + req.connection.remoteAddress + '] http message: ' + req.body.message);
+	res.set('Connection', 'close');
+	res.send('OK');
+	res.end();
+});
+
+http.post('/powermeter', function (req, res) {
+	helper.log.trace('[' + req.connection.remoteAddress + '] http power meter: ' + "\n" + req.body.result);
+	storage.inputPowermeter(req.body.result);
+	res.set('Connection', 'close');
+	res.send('OK');
+	res.end();
+});
+
+http.get('/power', function (req, res) {
+	helper.log.debug('[' + req.connection.remoteAddress + '] http get power');
+	
+	var httpReturn = function (ok, result) {
+		if (ok) {
+			res.json(result);
+		} else {
+			res.send('Error');
+		}
+		res.end();
+	}
+	
+	storage.currentPower(httpReturn);
 });
 
 http.listen(8080, function () {

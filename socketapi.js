@@ -4,17 +4,17 @@ var data = require('./data.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
-var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'weather'];
+var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'weather', 'message', 'powermeter'];
 
 var socket = nodejsWebsocket.createServer(function (conn) {
-	helper.log.info('websocket started');
+	helper.log.info('[' + conn.socket.remoteAddress + '] websocket started');
 	conn.on('text', function (str) {
 		var parts = str.split('/');
 		if (valid.indexOf(parts[0]) != -1) {
 			set(parts, conn);
 		} else {
 			conn.sendText(JSON.stringify({'error': 'invalid command: ' + parts[0] + ' (' + str + ')'}));
-			helper.log.debug('invalid websocket command: ' + parts[0] + ' (' + str + ')');
+			helper.log.debug('[' + conn.socket.remoteAddress + '] invalid websocket command: ' + parts[0] + ' (' + str + ')');
 		}
 	});
 	conn.on('close', function (code, reason) {
@@ -36,6 +36,9 @@ var socket = nodejsWebsocket.createServer(function (conn) {
 			case 'EHOSTDOWN':
 				helper.log.error('where has the client gone? (EHOSTDOWN)');
 				break;
+			case 'EPIPE':
+				helper.log.error('where has the client gone? (EPIPE)');
+				break;
 			default:
 				helper.log.error(err.code);
 				throw err;
@@ -53,7 +56,7 @@ function set (d, conn) {
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
 				conn.sendText(JSON.stringify({'error': 'invalid set command: ' + d.join('/')}));
-				helper.log.error('invalid set command: ' + d.join('/'));
+				helper.log.error('[' + conn.socket.remoteAddress + '] invalid set command: ' + d.join('/'));
 			}
 			break;
 			
@@ -64,7 +67,7 @@ function set (d, conn) {
 				conn.sendText(JSON.stringify({'result': status}));
 			} else {
 				conn.sendText(JSON.stringify({'error': 'invalid raw command: ' + d.join('/')}));
-				helper.log.error('invalid raw command: ' + d.join('/'));
+				helper.log.error('[' + conn.socket.remoteAddress + '] invalid raw command: ' + d.join('/'));
 			}
 			break;
 		
@@ -99,20 +102,28 @@ function set (d, conn) {
 				var valid = Object.keys(helper.log.loglevel);
 				if (valid.indexOf(newLoglevel) == -1) {
 					conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + newLoglevel}));
-					helper.log.error('invalid loglevel command: ' + newLoglevel);
+					helper.log.error('[' + conn.socket.remoteAddress + '] invalid loglevel command: ' + newLoglevel);
 				} else {
 					global.loglevel = helper.log.loglevel[newLoglevel];
 					conn.sendText(JSON.stringify({'result': 'loglevel set to ' + newLoglevel}));
-					helper.log.info('loglevel set to ' + newLoglevel);
+					helper.log.info('[' + conn.socket.remoteAddress + '] loglevel set to ' + newLoglevel);
 				}
 			} else {
 				conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + d.join(' ')}));
-				helper.log.error('invaild loglevel command: ' + d.join('/'));
+				helper.log.error('[' + conn.socket.remoteAddress + '] invaild loglevel command: ' + d.join('/'));
 			}
 			break;
-			
+		
+		case 'message':
+			helper.log.info('[' + conn.socket.remoteAddress + '] websocket message: ' + d.join('/'));
+			break;
+		
+		case 'powermeter':
+			helper.log.info('[' + conn.socket.remoteAddress + '] Power Meter: ' + "\n" + d.join('/'));
+			break;
+		
 		default:
-			helper.log.error('should not reach this code block');
+			helper.log.error('[' + conn.socket.remoteAddress + '] should not reach this code block');
 	}
 }
 

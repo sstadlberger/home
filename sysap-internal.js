@@ -18,6 +18,7 @@ var deviceTypes = {
 	'1013': 'shutter',
 	'9004': 'thermostat',
 	'DS18B20': 'temperature',
+	'DHT11': 'humidity',
 	'4800': 'scene'
 };
 var options = {
@@ -57,6 +58,9 @@ var options = {
 		}
 	},
 	'temperature': {
+		'dp': 'odp0000'
+	},
+	'humidity': {
 		'dp': 'odp0000'
 	}
 };
@@ -488,7 +492,7 @@ var status = function (d) {
 			}
 		}
 	}
-	helper.log.debug('status for interface updated');
+	helper.log.trace('status for interface updated');
 	websocket.broadcast(JSON.stringify({'status': d.status}));
 }
 
