@@ -6,10 +6,12 @@ var sysap = require('./sysap.js');
 
 /**
  * translates a human readable request into the actual knx commands and calls the "real" set-functions
+ * 
  * @param {string} type - what kind of actuator (switch, switchgroup, dimmer, shutter, shuttergroup & scene)
  * @param {string} serialnumber - serial number of the actuator
  * @param {string} channel - channel number of the actuator
  * @param {string} action - what action should be performed (on, off, up, down, stop & set)
+ * 
  * @returns {string} either what action was performed or error message
  */
 var parse = function (type, serialnumber, channel, action, value) {
@@ -125,6 +127,7 @@ var parse = function (type, serialnumber, channel, action, value) {
 
 /**
  * sets a knx parameter via xmpp
+ * 
  * @param {string} serialnumber - serial number of the actuator
  * @param {string} channel - channel number of the actuator
  * @param {string} datapoint - datapoint of the actuator
@@ -199,23 +202,21 @@ var set = function (serialnumber, channel, datapoint, value) {
 	helper.log.debug('set actuator: ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value);
 }
 
-var updateStructure = function (broadcast) {
-	sysap_internal.updateStructure(broadcast);
+/**
+ * wrapper for updateStructure function in sysap-internal.js
+ */
+var updateStructure = function () {
+	sysap_internal.updateStructure();
 }
 
 /**
- * wrapper for master update request
+ * wrapper for master update request (all) function in sysap-internal.js
  */
 var updateAll = function () {
 	sysap_internal.all();
-}
-
-var setDP = function (sn, cn, dp, value) {
-	sysap.setDP(sn, cn, dp, value);
 }
 
 module.exports.parse = parse;
 module.exports.set = set;
 module.exports.updateStructure = updateStructure;
 module.exports.updateAll = updateAll;
-module.exports.setDP = setDP;

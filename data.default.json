@@ -1,8 +1,4 @@
 {
-	"house": {
-		"floor": {},
-		"room": {}
-	},
 	"actuators": {},
 	"strings": {},
 	"status": [],

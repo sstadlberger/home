@@ -3,8 +3,8 @@ var ltx = require('ltx');
 var sysap = require('./sysap.js');
 var helper = require('./helper.js');
 var config = require('./config.js');
-var websocket = require('./socketapi.js');
 var data = require('./data.js');
+var websocket = require('./socketapi.js');
 var fs = require('fs');
 var util = require('util');
 
@@ -184,10 +184,11 @@ var presence = function (stanza) {
 /**
  * parses an update packet and updates the master data structure
  * requires a pre-populated actuators object
+ * 
  * @param {Object} stanza - a node-xmpp-client xml data packet
- * @param {Object} data - the master data object
  */
-var update = function (stanza, d) {
+var update = function (stanza) {
+	var actuators = data.getData('actuators');
 
 	helper.ltx.getElements(stanza, ['event', 'items', 'item']).forEach(function (item) {
 		
@@ -201,7 +202,7 @@ var update = function (stanza, d) {
 				
 				// is a valid device and init is completed
 				var sn = helper.ltx.getAttr(device, 'serialNumber');
-				if (sn && sn != '' && d.actuators[sn]) {
+				if (sn && sn != '' && actuators[sn]) {
 				
 					// valid update packet that is of interest
 					if (helper.ltx.getAttr(device, 'commissioningState') == 'ready') {
@@ -211,16 +212,11 @@ var update = function (stanza, d) {
 							var cn = helper.ltx.getAttr(channel, 'i');
 							if (cn) {
 								channel.children.forEach(function (dp) {
-									if (!d.actuators[sn]['channels'][cn]) {
-										d.actuators[sn]['channels'][cn] = {
-											datapoints: {}
-										};
-									}
 									dp.getChildren('dataPoint').forEach(function (datapoint) {
 										var pt = helper.ltx.getAttr(datapoint, 'i');
 										var vl = helper.ltx.getElementText(datapoint, ['value']);
 										if (pt && vl) {
-											d.actuators[sn].channels[cn].datapoints[pt] = vl;
+											data.setDatapoint(sn, cn, pt, vl);
 										}
 									});
 								});
@@ -231,14 +227,15 @@ var update = function (stanza, d) {
 			});
 		}
 	});
+
 }
 
 /**
- * parses the master packet and creates the master data struchture
+ * parses the master packet and creates the master data structure
+ * 
  * @param {Object} stanza - a node-xmpp-client xml data packet
- * @param {Object} data - the master data object
  */
-var response = function (stanza, d) {
+var response = function (stanza) {
 	helper.ltx.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
 		
 		helper.ltx.getElements(param, ['value', 'boolean']).forEach(function (value) {
@@ -254,8 +251,8 @@ var response = function (stanza, d) {
 		});
 		
 		helper.ltx.getElements(param, ['value', 'int']).forEach(function (value) {
-				helper.log.warn('unknown int update');
-				helper.log.trace(stanza.toString());
+			helper.log.warn('unknown int update');
+			helper.log.trace(stanza.toString());
 		});
 		
 		helper.ltx.getElements(param, ['value', 'string']).forEach(function (value) {
@@ -310,18 +307,12 @@ var response = function (stanza, d) {
 				
 				var allData = ltx.parse(allDataText);
 			
-				// floors and rooms
-				helper.ltx.getElements(allData, ['entities', 'entity']).forEach(function (entity) {
-					var entityData = JSON.parse(entity.getText());
-					if (entity.attrs.type == 'floor' || entity.attrs.type == 'room') {
-						d.house[entity.attrs.type][entity.attrs.uid] = entityData.name;
-					}
-				});
-			
 				// strings
+				var allStrings = {};
 				helper.ltx.getElements(allData, ['strings', 'string']).forEach(function (string) {
-					d.strings[string.attrs.nameId] = string.getText();
+					allStrings[string.attrs.nameId] = string.getText();
 				});
+				data.setData('strings', allStrings);
 			
 				// actuators
 				helper.ltx.getElements(allData, ['devices', 'device']).forEach(function (device) {
@@ -329,7 +320,7 @@ var response = function (stanza, d) {
 					var sn = helper.ltx.getAttr(device, 'serialNumber');
 					var deviceId = helper.ltx.getAttr(device, 'deviceId');
 					if (sn) {
-						var typeName = d.strings[nameId];
+						var typeName = allStrings[helper.ltx.getAttr(device, 'nameId')];
 						var serialNumber = sn;
 						var valid = true;
 						if (sn.substring(0, 4) == 'FFFF') {
@@ -341,7 +332,9 @@ var response = function (stanza, d) {
 									typeName = 'Scene: ' + name;
 									name = name.replace(/\s+/g, '');
 									sn = 'SCENE' + name;
-									if (name == '' || d.actuators[sn]) {
+									// it is a bit resource intensive to refetch the object all the time but the current version is always required :-(
+									var actuators = data.getData('actuators');
+									if (name == '' || actuators[sn]) {
 										helper.log.warn('scene ' + serialNumber + ' was not added because the name was not unique: ' + sn);
 										valid = false;
 									}
@@ -349,36 +342,28 @@ var response = function (stanza, d) {
 							});
 						}
 						if (valid) {
-							var nameId = helper.ltx.getAttr(device, 'nameId');
-							d.actuators[sn] = {
-								serialNumber: serialNumber,
-								deviceId: deviceId,
-								typeName: typeName,
-								channels: {}
-							};
-							helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
-								var cn = helper.ltx.getAttr(channel, 'i');
-								if (cn) {
-									d.actuators[sn]['channels'][cn] = {
-										datapoints: {}
-									};
-									['inputs', 'outputs', 'parameters'].forEach(function (put) {
-										['dataPoint', 'parameter'].forEach(function (name) {
-											helper.ltx.getElements(channel, [put, name]).forEach(function (dataPoint) {
-												var dp = helper.ltx.getAttr(dataPoint, 'i');
-												if (dp) {
-													d.actuators[sn]['channels'][cn]['datapoints'][dp] = helper.ltx.getElementText(dataPoint, ['value']);
-												}
+							if (data.createActuator(sn, serialNumber, deviceId, typeName)) {
+								helper.ltx.getElements(device, ['channels', 'channel']).forEach(function (channel) {
+									var cn = helper.ltx.getAttr(channel, 'i');
+									if (cn) {
+										['inputs', 'outputs', 'parameters'].forEach(function (put) {
+											['dataPoint', 'parameter'].forEach(function (name) {
+												helper.ltx.getElements(channel, [put, name]).forEach(function (dataPoint) {
+													var dp = helper.ltx.getAttr(dataPoint, 'i');
+													if (dp) {
+														data.setDatapoint(sn, cn, dp, helper.ltx.getElementText(dataPoint, ['value']));
+													}
+												});
 											});
 										});
-									});
-								}
-							});
+									}
+								});
+							}
 						}
 					}
 				});
 				
-				updateStructure(true);
+				updateStructure();
 				helper.log.info('master update complete');
 			} else {
 				helper.log.warn('unknown string update');
@@ -389,46 +374,46 @@ var response = function (stanza, d) {
 }
 
 /**
- * converts the master data object into bite-sized parts that are structured
- * for the front-end
- * @param {Object} data - the master data object
- * @param {Object} structure - the data structure of the front-end
+ * converts the master data object into bite-sized parts that are structured for the front-end
+ * The resulting object is stored in the main data structure and broadcast to all connected clients.
  */
-var status = function (d) {
-	d.status = [];
+var status = function () {
+	var status = [];
+	var allStructure = data.getData('structure');
+	var actuators = data.getData('actuators');
 	var structure = [];
 	var shortcuts = [];
-	Object.assign(structure, d.structure.structure);
-	Object.assign(shortcuts, d.structure.shortcuts);
+	Object.assign(structure, allStructure.structure);
+	Object.assign(shortcuts, allStructure.shortcuts);
 	structure.push({'floors': [{'buttons': shortcuts}]});
 	for (var mode = 0; mode < structure.length; mode++) {
-		d.status[mode] = [];
+		status[mode] = [];
 		if (structure[mode].floors) {
 			for (var floor = 0; floor < structure[mode].floors.length; floor++) {
-				d.status[mode][floor] = {};
+				status[mode][floor] = {};
 				if (structure[mode].floors[floor].buttons) {
 					for (var button = 0; button < structure[mode].floors[floor].buttons.length; button++) {
 						var buttonData = structure[mode].floors[floor].buttons[button];
 						if (buttonData) {
 							var sn = buttonData.sn;
 							var cn = buttonData.cn;
-							if (d.actuators[sn] && d.actuators[sn].channels && d.actuators[sn].channels[cn]) {
-								var type = _typeHelper(d.actuators, deviceTypes[d.actuators[sn].deviceId], sn, cn);
+							if (actuators[sn] && actuators[sn].channels && actuators[sn].channels[cn]) {
+								var type = _typeHelper(actuators, deviceTypes[actuators[sn].deviceId], sn, cn);
 								var dp = options[type].dp;
-								if (d.actuators[sn].channels[cn] && d.actuators[sn].channels[cn].datapoints[dp] != undefined) {
-									var value = d.actuators[sn].channels[cn].datapoints[dp];
+								if (actuators[sn].channels[cn] && actuators[sn].channels[cn].datapoints[dp] != undefined) {
+									var value = actuators[sn].channels[cn].datapoints[dp];
 									if (type == 'thermostat') {
 										value = Math.round(value * 10) / 10;
 									}
-									d.status[mode][floor][sn + '/' + cn] = {
+									status[mode][floor][sn + '/' + cn] = {
 										'value' : value
 									};
-									if (options[deviceTypes[d.actuators[sn].deviceId]].infos) {
-										d.status[mode][floor][sn + '/' + cn].infos = {};
+									if (options[deviceTypes[actuators[sn].deviceId]].infos) {
+										status[mode][floor][sn + '/' + cn].infos = {};
 										var names = Object.keys(options[type].infos);
 										for (var i = 0; i < names.length; i++) {
-											if (typeof d.actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
-												var value = d.actuators[sn].channels[cn].datapoints[names[i]];
+											if (typeof actuators[sn].channels[cn].datapoints[names[i]] !== undefined) {
+												var value = actuators[sn].channels[cn].datapoints[names[i]];
 												var name = options[type].infos[names[i]];
 												if (name.substr(0, 2) == 'x-') {
 													if (type == 'shutter') {
@@ -437,10 +422,10 @@ var status = function (d) {
 																// use custom calibration for "nearly-closed" state
 																// i.e. when a little bit of light shines through the slots in the shutters
 																var dark = buttonData.extra;
-																var runtime = d.actuators[sn].channels[cn].datapoints['pm0001'];
+																var runtime = actuators[sn].channels[cn].datapoints['pm0001'];
 																var realTime = runtime - dark;
 																var offset = realTime / runtime;
-																var currentValue = d.status[mode][floor][sn + '/' + cn].value;
+																var currentValue = status[mode][floor][sn + '/' + cn].value;
 													
 																var currentTime = runtime * (currentValue / 100);
 																if (currentTime < realTime) {
@@ -451,36 +436,36 @@ var status = function (d) {
 																}
 													
 																var realValue = currentValue / offset;
-																d.status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
+																status[mode][floor][sn + '/' + cn].value = Math.min(realValue, 100);
 															} else if (name == 'x-fullclosed') {
 																value = structure[mode].floors[floor].buttons[button].extra * 1000;
 															}
 														}
 													} else if (type == 'thermostat') {
 														if (name == 'x-set') {
-															value = 21 + parseFloat(d.actuators[sn].channels[cn].datapoints['odp0003']);
-															if (d.actuators[sn].channels[cn].datapoints['odp0008'] == 68 && d.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															value = 21 + parseFloat(actuators[sn].channels[cn].datapoints['odp0003']);
+															if (actuators[sn].channels[cn].datapoints['odp0008'] == 68 && actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
 																// show the real eco target temperature
-																value = value - parseFloat(d.actuators[sn].channels[cn].datapoints['pm0000']);
+																value = value - parseFloat(actuators[sn].channels[cn].datapoints['pm0000']);
 															}
-															if (d.actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
+															if (actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
 																// off
 																value = 0;
 															}
 														} else if (name == 'x-heat') {
-															value = d.actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
+															value = actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
 														} else if (name == 'x-on') {
-															value = d.actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
+															value = actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
 														} else if (name == 'x-eco') {
 															value = false;
-															if ((d.actuators[sn].channels[cn].datapoints['odp0008'] == 68 || d.actuators[sn].channels[cn].datapoints['odp0008'] == 36) && d.actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															if ((actuators[sn].channels[cn].datapoints['odp0008'] == 68 || actuators[sn].channels[cn].datapoints['odp0008'] == 36) && actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
 																value = true;
 															}
 														}
 													}
 													name = name.substr(2);
 												}
-												d.status[mode][floor][sn + '/' + cn].infos[name] = value;
+												status[mode][floor][sn + '/' + cn].infos[name] = value;
 											}
 										}
 									}
@@ -493,10 +478,16 @@ var status = function (d) {
 		}
 	}
 	helper.log.trace('status for interface updated');
-	websocket.broadcast(JSON.stringify({'status': d.status}));
+	helper.log.trace(util.inspect(status, {showHidden: false, depth: null}));
+	data.setData('status', status);
 }
 
-var updateStructure = function (broadcast) {
+/**
+ * updates the structure object for the interface
+ * The file structure.json is loaded and it contents are run agains the actuators from the main data structure.
+ * The resulting object is saved to the main data structure and broadcast to all connected clients.
+ */
+var updateStructure = function () {
 	var loadedMain = JSON.parse(fs.readFileSync('./structure.json', 'utf8'));
 	var actuators = data.getData('actuators');
 	
@@ -542,11 +533,18 @@ var updateStructure = function (broadcast) {
 	helper.log.info('structure for interface updated');
 	helper.log.trace(util.inspect(main, {showHidden: false, depth: null}));
 	data.setData('structure', main);
-	if (broadcast) {
-		websocket.broadcast(JSON.stringify({'structure': main}));
-	}
 }
 
+/**
+ * helps building a button object for the interface
+ * the input button object will be basically enriched to its final form
+ * a new object is returned and the input object will not be modified
+ * 
+ * @param {Object} currentButton - the input button object
+ * @param {Object} actuators - an actuator object (see data.js)
+ * 
+ * @returns {Object}
+ */
 var _buttonhelper = function (currentButton, actuators) {
 	var result = {};
 	var sn = currentButton.serialnumber;
@@ -566,6 +564,17 @@ var _buttonhelper = function (currentButton, actuators) {
 	return result;
 }
 
+/**
+ * sets the corrects sub-type of an actuator
+ * 
+ * @param {Object} actuators - an actuator object (see data.js)
+ * @param {String} type - the type which will be converted
+ * @param {String} sn - the actuator identifer
+ * @param {String} ch - the channel of the actuator
+ * @param {String|number} extra - any extra information
+ * 
+ * @returns {String} the converted sub-type
+ */
 var _typeHelper = function (actuators, type, sn, ch, extra) {
 	switch (type) {
 		case 'shutter':

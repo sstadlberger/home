@@ -67,7 +67,7 @@ http.get('/raw/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 
 http.get('/input/:serialnumber/:channel/:datapoint/:value', function (req, res) {
 	helper.log.debug('[' + req.connection.remoteAddress + '] input raw data: ' + req.params.serialnumber + '/' + req.params.channel + '/' + req.params.datapoint + ': ' + req.params.value);
-	data.setDP(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value);
+	data.setDatapoint(req.params.serialnumber, req.params.channel, req.params.datapoint, req.params.value, true);
 	res.set('Connection', 'close');
 	res.send('OK');
 	res.end();
@@ -96,6 +96,21 @@ http.post('/powermeter', function (req, res) {
 });
 
 http.get('/power', function (req, res) {
+	helper.log.debug('[' + req.connection.remoteAddress + '] http get power');
+	
+	var httpReturn = function (ok, result) {
+		if (ok) {
+			res.json(result);
+		} else {
+			res.send('Error');
+		}
+		res.end();
+	}
+	
+	storage.currentPower(httpReturn);
+});
+
+http.get('/powerdata', function (req, res) {
 	helper.log.debug('[' + req.connection.remoteAddress + '] http get power');
 	
 	var httpReturn = function (ok, result) {

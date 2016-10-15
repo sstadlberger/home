@@ -91,7 +91,7 @@ function set (d, conn) {
 				sysap_external.updateAll();
 				conn.sendText(JSON.stringify({'result': 'requested master update'}));
 			} else {
-				sysap_external.updateStructure(true);
+				sysap_external.updateStructure();
 				conn.sendText(JSON.stringify({'result': 'pushed update'}));
 			}
 			break;
@@ -129,6 +129,12 @@ function set (d, conn) {
 
 var lastBroadcast = '';
 
+/**
+ * sends a message to all currently connected clients
+ * The message is usually an encoded JSON or plain text. A message is only sent if the message is different from the previous message (md5).
+ * 
+ * @param {String} msg
+ */
 var broadcast = function (msg) {
 	var msgMD5 = md5(msg);
 	// not every update from the sysap contains info that is relevant for the interface (e.g. switch pressed event)

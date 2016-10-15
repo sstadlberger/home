@@ -2,7 +2,6 @@ var xmpp_client = require('node-xmpp-client');
 var fs = require('fs');
 var config = require('./config.js');
 var helper = require('./helper.js');
-var data = require('./data.js');
 var sysap_internal = require('./sysap-internal.js');
 var sysap_external = require('./sysap-external.js');
 
@@ -36,8 +35,8 @@ sysap.on('stanza', function(stanza) {
 		helper.ltx.getElementAttr(stanza, ['event', 'items'], 'node') == 'http://abb.com/protocol/update') {
 		
 		helper.log.debug('update packet received');
-		sysap_internal.update(stanza, data.data);
-		sysap_internal.status(data.data);
+		sysap_internal.update(stanza);
+		sysap_internal.status();
 	
 	
 	// MASTER STATUS UPDATE
@@ -49,8 +48,8 @@ sysap.on('stanza', function(stanza) {
 			helper.log.trace('ping result packet received');
 		} else {
 			helper.log.debug('result packet received');
-			sysap_internal.response(stanza, data.data);
-			sysap_internal.status(data.data);
+			sysap_internal.response(stanza);
+			sysap_internal.status();
 		}
 	
 	} else if (stanza.getName() == 'presence') {
@@ -93,6 +92,6 @@ function keepAlive () {
 	setTimeout(keepAlive, 10 * 1000);
 }
 
-sysap_internal.updateStructure(false);
+sysap_internal.updateStructure();
 
 module.exports.sysap = sysap;
