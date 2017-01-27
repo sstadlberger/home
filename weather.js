@@ -3,30 +3,32 @@ var data = require('./data.js');
 var config = require('./config.js');
 var helper = require('./helper.js');
 
-var updateWeather = function() {
+var updateWeather = function () {
 
 	https.get({
 		host: config.weather.host,
 		path: config.weather.path
-	}, function(response) {
+	}, function (response) {
 		var raw = '';
-		response.on('data', function(d) {
+		response.on('data', function (d) {
 			raw += d;
 		});
-		response.on('end', function() {
+		response.on('end', function () {
 			helper.log.info('weather updated');
 			var json = JSON.parse(raw);
 			helper.log.trace(json);
-			var temp = {max: -999, min: 999};
-			json.hourly.data.forEach(function(item){
+			var temp = { max: -999, min: 999 };
+			json.hourly.data.forEach(function (item) {
 				temp.max = Math.max(temp.max, item.temperature);
 				temp.min = Math.min(temp.min, item.temperature);
 			});
 			json.hourly.temperature = temp;
 			data.setData('weather', json);
 		});
+	}).on('error', function (e) {
+		helper.log.error('error updating weather: ' + e.message);
 	});
-	
+
 	setTimeout(updateWeather, 10 * 60 * 1000);
 }
 
