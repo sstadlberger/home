@@ -1,0 +1,37 @@
+{
+	"structure":
+		[
+			{
+				"mode": "Lights",
+				"icon": "light.svg",
+				"iconActive": "lightActive.svg",
+				"floors": [
+					{
+						"name": "Floor 1",
+						"background": "floor1.png",
+						"buttons": [
+							{
+								"x": 42,
+								"y": 42,
+								"iconOn": "iconOn.svg",
+								"iconOff": "IconOff.svg",
+								"serialnumber": "ABB1234567890",
+								"channel": "ch0000",
+								"name": "Light"
+							}
+						]
+					}
+				]
+			}
+		]
+	"shortcuts":
+		[
+			{
+				"iconOn": "iconOn.svg",
+				"iconOff": "IconOff.svg",
+				"serialnumber": "ABB1234567890",
+				"channel": "ch0000",
+				"name": "Light"
+			}
+		]
+}
