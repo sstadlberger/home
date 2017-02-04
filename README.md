@@ -7,6 +7,22 @@ Custom Interface / API for the Busch Jäger free@home system (home automation).
 The following Node.js modules:
 - t.b.d.
 
+# Current Status
+
+## Timers
+Add the ability to execute actions at certain times or intervalls. For example:
+- Switch the light off in 10 minutes
+- Open the shutters at 7:00
+- Turn on the ambient light at 30 minutes after sunset
+
+## Triggers
+Add the abilities to exectute actions at certain conditions. For example:
+- Add a timer for 10 minutes after Light has been switched on
+- Close the shutters if the light has been switched on after sunset
+
+## Homematic
+Add support for Homematic sensors and actuators to enable easy expansion of the system.
+
 # License
 This is proprietary code, © by Stefan Stadlberger. It may not be modified, distributed or otherwise used without prior and explicit permission. It might be switched to a open license at a later point.
 
