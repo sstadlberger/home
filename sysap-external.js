@@ -203,6 +203,7 @@ var set = function (serialnumber, channel, datapoint, value) {
 							.c('string', {})
 								.t(value);
 	
+	helper.log.trace('[SEND] ' + setData.root().toString());
 	sysap.sysap.send(setData);
 	helper.log.debug('set actuator: ' + serialnumber + '/' + channel + '/' + datapoint + ': ' + value);
 }
