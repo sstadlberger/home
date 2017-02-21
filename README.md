@@ -24,7 +24,7 @@ Add the abilities to exectute actions at certain conditions. For example:
 Add support for Homematic sensors and actuators to enable easy expansion of the system.
 
 # License
-This is proprietary code, © by Stefan Stadlberger. It may not be modified, distributed or otherwise used without prior and explicit permission. It might be switched to a open license at a later point.
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Current Version
 Version numbering will start when the first set of features is complete.

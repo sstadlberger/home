@@ -17,6 +17,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Stefan Stadlberger",
-  "license": "UNLICENSED",
+  "license": "MPL-2.0",
   "repository": "https://github.com/sstadlberger/home"
 }
