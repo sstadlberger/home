@@ -3,13 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-var sysap = require('./sysap.js');
-var webapi = require('./webapi.js');
-var socketapi = require('./socketapi.js');
-var helper = require('./helper.js');
-var weather = require('./weather.js');
 
+// startup with parameters (currently only debug info)
+var helper = require('./helper.js');
 var argv = require('minimist')(process.argv.slice(2));
+
 global.loglevel = helper.log.loglevel.info;
 if (argv.loglevel) {
 	var valid = Object.keys(helper.log.loglevel);
@@ -21,5 +19,13 @@ if (argv.loglevel) {
 		global.loglevel = helper.log.loglevel[argv.loglevel];
 	}
 }
+
+
+// all paramaters are ok, load the rest
+var sysap = require('./sysap.js');
+var webapi = require('./webapi.js');
+var socketapi = require('./socketapi.js');
+var logic = require('./logic.js');
+var weather = require('./weather.js');
 
 helper.log.info('home started');

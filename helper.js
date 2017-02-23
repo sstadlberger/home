@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
+const util = require('util'); 
+
 var ltx = {};
 
 ltx.getElement = function (element, path) {
@@ -72,37 +74,41 @@ log.loglevel = {
 	'fatal' : 1
 };
 
-log.printlog = function (level, message) {
+log.printlog = function (level, message, dontPrintFull) {
 	if (this.loglevel[level] <= global.loglevel) {
 		prefix = ('[' + level + ']  ').slice(0, 8);
 		var now = new Date();
 		var datestring = now.toISOString().slice(0, 10) + ' ' + now.toLocaleTimeString() + ' ';
+		if (message != null && typeof(message) == 'object') {
+			message = util.inspect(message, { depth: null, colors: true });
+			message = "\n" + message;
+		}
 		console.log(datestring + prefix + message);
 	}
 }
 
-log.trace = function (message) {
-	this.printlog('trace', message);
+log.trace = function (message, dontPrintFull) {
+	this.printlog('trace', message, dontPrintFull);
 }
 
-log.debug = function (message) {
-	this.printlog('debug', message);
+log.debug = function (message, dontPrintFull) {
+	this.printlog('debug', message, dontPrintFull);
 }
 
-log.info = function (message) {
-	this.printlog('info', message);
+log.info = function (message, dontPrintFull) {
+	this.printlog('info', message, dontPrintFull);
 }
 
-log.warn = function (message) {
-	this.printlog('warn', message);
+log.warn = function (message, dontPrintFull) {
+	this.printlog('warn', message, dontPrintFull);
 }
 
-log.error = function (message) {
-	this.printlog('error', message);
+log.error = function (message, dontPrintFull) {
+	this.printlog('error', message, dontPrintFull);
 }
 
-log.fatal = function (message) {
-	this.printlog('fatal', message);
+log.fatal = function (message, dontPrintFull) {
+	this.printlog('fatal', message, dontPrintFull);
 }
 
 module.exports.log = log;

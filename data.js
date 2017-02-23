@@ -111,6 +111,25 @@ structure:
 weather:
 	contains a data response from the Dark Sky API
 	see here for the documentation: https://darksky.net/dev/docs
+
+daynight:
+	contains the sunset & sunrise data
+	nadir: Date Object
+	nightEnd: Date Object
+	nauticalDawn: Date Object
+	dawn: Date Object
+	sunrise: Date Object
+	sunriseEnd: Date Object
+	goldenHourEnd: Date Object
+	solarNoon: Date Object
+	goldenHour: Date Object
+	sunsetStart: Date Object
+	sunset: Date Object
+	dusk: Date Object
+	nauticalDusk: Date Object
+	night: Date Object
+	isDay: boolean
+	isNight: boolean
 */
 
 
@@ -167,7 +186,7 @@ var getData = function (what) {
  */
 var setData = function (what, whatData) {
 	data[what] = whatData;
-	if (what == 'weather' || what == 'status' || what == 'structure') {
+	if (what == 'weather' || what == 'status' || what == 'structure' || what == 'daynight') {
 		var sendData = {};
 		sendData[what] = data[what];
 		websocket.broadcast(JSON.stringify(sendData));

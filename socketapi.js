@@ -9,7 +9,7 @@ var data = require('./data.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
-var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'weather', 'message', 'powermeter'];
+var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'weather', 'message', 'powermeter', 'daynight'];
 
 var socket = nodejsWebsocket.createServer(function (conn) {
 	helper.log.info('[' + conn.socket.remoteAddress + '] websocket started');
@@ -81,6 +81,11 @@ function set (d, conn) {
 			conn.sendText(JSON.stringify({'weather': weather}));
 			break;
 		
+		case 'daynight':
+			var daynight = data.getData('daynight');
+			conn.sendText(JSON.stringify({'daynight': daynight}));
+			break;
+		
 		case 'status':
 			var status = data.getData('status');
 			conn.sendText(JSON.stringify({'status': status}));
@@ -128,7 +133,7 @@ function set (d, conn) {
 			break;
 		
 		default:
-			helper.log.error('[' + conn.socket.remoteAddress + '] should not reach this code block');
+			helper.log.error('[' + conn.socket.remoteAddress + '] unknown command: ' + command);
 	}
 }
 

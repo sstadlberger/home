@@ -14,8 +14,21 @@ config.websocket = {
 	password: 'PASSWORD'
 };
 
+config.location = {
+	lat: '1.2345',
+	long: '1.2345'
+};
+
 config.weather = {
-	url: 'https://api.forecast.io/forecast/APIKEY/LAT,LONG?units=si&lang=de'
+	url: 'https://api.forecast.io/forecast/APIKEY/' + config.location.lat + ',' + config.location.long + '?units=si&lang=de'
+};
+
+config.mysql = {
+	host : 'localhost',
+	user : 'root',
+	password : '',
+	database : 'db',
+	port : 3306
 };
 
 module.exports = config;
