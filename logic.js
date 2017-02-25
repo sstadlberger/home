@@ -20,7 +20,7 @@ var updateDayNight = function () {
     var current = new Date();
 	var times = SunCalc.getTimes(current, config.location.lat, config.location.long);
 
-    if (current > times.dawn && times < times.dusk) {
+    if (current > times.dawn && current < times.dusk) {
         times.isDay = true;
         times.isNight = false;
     } else {
