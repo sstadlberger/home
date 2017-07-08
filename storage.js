@@ -7,23 +7,25 @@ var mysql = require('mysql');
 var helper = require('./helper.js');
 var config = require('./config.js');
 
-var connection = mysql.createConnection({
-	host : config.mysql.host,
-	user : config.mysql.user,
-	password : config.mysql.password,
-	database : config.mysql.database,
-	port : config.mysql.port
-});
+if (global.useDB) {
+	var connection = mysql.createConnection({
+		host: config.mysql.host,
+		user: config.mysql.user,
+		password: config.mysql.password,
+		database: config.mysql.database,
+		port: config.mysql.port
+	});
 
-connection.connect();
+	connection.connect();
 
-connection.query('SELECT 1;', function(err, rows, fields) {
-	if (err) {
-		helper.log.error('could not connect to DB: ' + err);
-	} else {
-		helper.log.info('connected to DB');
-	}
-});
+	connection.query('SELECT 1;', function (err, rows, fields) {
+		if (err) {
+			helper.log.error('could not connect to DB: ' + err);
+		} else {
+			helper.log.info('connected to DB');
+		}
+	});
+}
 
 var inputPowermeter = function (data) {
 	var mapping = {
@@ -53,29 +55,38 @@ var inputPowermeter = function (data) {
 			}
 		}
 	});
-	var query = connection.query('INSERT INTO powerdata SET ?', result, function(err, result) {
-		if (err) {
-			helper.log.error('powermeter insert failed: ' + err);
-		} else {
-			helper.log.debug('powermeter storage updated');
-		}
-	});
+	if (global.useDB) {
+		var query = connection.query('INSERT INTO powerdata SET ?', result, function (err, result) {
+			if (err) {
+				helper.log.error('powermeter insert failed: ' + err);
+			} else {
+				helper.log.debug('powermeter storage updated');
+			}
+		});
+	} else {
+		helper.log.warn('Data was not written to DB because DB support is disabled.');
+	}
 };
 
 var currentPower = function (callback) {
 	var sql = 'SELECT id, (SELECT MIN(ts) FROM powerdata) AS min, ts AS max, kwh, v1, v2, v3, a1, a2, a3, pf, hz, outages, kw FROM powerdata ORDER BY id DESC LIMIT 1';
-	var query = connection.query(sql, function(err, result, fields, res) {
-		if (err) {
-			helper.log.error('currentPower query failed: ' + err);
-			callback(false);
-		} else {
-			if (result.length == 1) {
-				callback(true, result[0]);
-			} else {
+	if (global.useDB) {
+		var query = connection.query(sql, function (err, result, fields, res) {
+			if (err) {
+				helper.log.error('currentPower query failed: ' + err);
 				callback(false);
+			} else {
+				if (result.length == 1) {
+					callback(true, result[0]);
+				} else {
+					callback(false);
+				}
 			}
-		}
-	});
+		});
+	} else {
+		helper.log.warn('Data was not returned from the DB because DB support is disabled.');
+		callback(false);
+	}
 };
 
 module.exports.inputPowermeter = inputPowermeter;

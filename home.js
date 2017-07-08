@@ -32,6 +32,13 @@ if (argv.useWeather == true) {
 }
 
 
+// set database
+global.useDB = false;
+if (argv.useDB == true) {
+	global.useDB = true;
+}
+
+
 // all paramaters are ok, load the rest
 var sysap = require('./sysap.js');
 var webapi = require('./webapi.js');
