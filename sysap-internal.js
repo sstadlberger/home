@@ -502,6 +502,8 @@ var updateStructure = function () {
 		structure[mode] = {};
 		structure[mode].icon =  loadedStructure[mode].icon;
 		structure[mode].iconActive = loadedStructure[mode].iconActive;
+		structure[mode].iconDark =  loadedStructure[mode].iconDark;
+		structure[mode].iconActiveDark = loadedStructure[mode].iconActiveDark;
 		structure[mode].floors = [];
 		if (loadedStructure[mode].floors) {
 			for (var floor = 0; floor < loadedStructure[mode].floors.length; floor++) {
@@ -559,6 +561,8 @@ var _buttonhelper = function (currentButton, actuators) {
 	result.y = currentButton.y;
 	result.iconOn = currentButton.iconOn;
 	result.iconOff = currentButton.iconOff;
+	result.iconOnDark = currentButton.iconOnDark;
+	result.iconOffDark = currentButton.iconOffDark;
 	result.sn = sn;
 	result.cn = cn;
 	result.type = _typeHelper(actuators, deviceTypes[actuators[sn].deviceId], sn, cn, currentButton.extra);
