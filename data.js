@@ -143,7 +143,7 @@ daynight:
  * @param {*} value - the value the datapoint should be set to
  * @param {boolean} update - should a status update be triggered
  */
-var setDatapoint = function (serialNumberUnique, channel, datapoint, value) {
+var setDatapoint = function (serialNumberUnique, channel, datapoint, value, update) {
 	if (!data.actuators[serialNumberUnique]) {
 		data.actuators[serialNumberUnique] = {
 			'serialNumber': serialNumberUnique,
