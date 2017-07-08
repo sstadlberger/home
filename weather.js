@@ -37,4 +37,6 @@ var updateWeather = function () {
 	setTimeout(updateWeather, 10 * 60 * 1000);
 }
 
-updateWeather();
+if (global.useWeather) {
+	updateWeather();
+}

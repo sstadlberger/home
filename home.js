@@ -4,10 +4,14 @@
 
 
 
-// startup with parameters (currently only debug info)
+// startup with parameters
 var helper = require('./helper.js');
 var argv = require('minimist')(process.argv.slice(2));
 
+
+// set log level
+// helper.log.loglevel contains all log levels
+// info (helper.log.loglevel.info) is set as default if no other loglevel is chosen
 global.loglevel = helper.log.loglevel.info;
 if (argv.loglevel) {
 	var valid = Object.keys(helper.log.loglevel);
@@ -18,6 +22,13 @@ if (argv.loglevel) {
 	} else {
 		global.loglevel = helper.log.loglevel[argv.loglevel];
 	}
+}
+
+
+// set weather
+global.useWeather = false;
+if (argv.useWeather == true) {
+	global.useWeather = true;
 }
 
 
