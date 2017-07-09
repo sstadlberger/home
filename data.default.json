@@ -5,5 +5,8 @@
 	"structure": {
 		"structure": [],
 		"shortcuts": []
-	}
+	},
+	"triggers": {},
+	"timers": {},
+	"actions": {}
 }
