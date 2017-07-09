@@ -141,7 +141,7 @@ daynight:
  * @param {string} channel - channel id (e.g. ch0000)
  * @param {string} datapoint - datapoint id (e.g. idp0000)
  * @param {*} value - the value the datapoint should be set to
- * @param {boolean} update - should a status update be triggered
+ * @param {boolean} [update] - should a status update be triggered (optional)
  */
 var setDatapoint = function (serialNumberUnique, channel, datapoint, value, update) {
 	if (!data.actuators[serialNumberUnique]) {
@@ -216,7 +216,27 @@ var createActuator = function (serialNumberUnique, serialNumber, deviceId, typeN
 	return true;
 }
 
+/**
+ * reads a complete actuator structure and returns it
+ * 
+ * @param {string} serialNumberUnique - the unique identifier for the actuator; can be different from serialNumber if serialNumber is not unique (e.g. with Busch Jäger SysAP Scenes)
+ * @param {string} [channel] - channel id (e.g. ch0000)
+ * @param {string} [datapoint] - datapoint id (e.g. idp0000)
+ * 
+ * @returns {Object} - the complete data structure of the request
+ */
+var getActuatorData = function (serialNumberUnique, channel, datapoint) {
+	if (channel && datapoint) {
+		return data.actuators[serialNumberUnique]['channels'][channel]['datapoints'][datapoint];
+	} else if (channel) {
+		return data.actuators[serialNumberUnique]['channels'][channel]['datapoints'];
+	} else {
+		return data.actuators[serialNumberUnique]['channels'];
+	}
+}
+
 module.exports.setDatapoint = setDatapoint;
 module.exports.getData = getData;
 module.exports.setData = setData;
 module.exports.createActuator = createActuator;
+module.exports.getActuatorData = getActuatorData;

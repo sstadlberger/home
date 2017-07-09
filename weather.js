@@ -19,7 +19,6 @@ var updateWeather = function () {
 			raw += d;
 		});
 		response.on('end', function () {
-			helper.log.info('weather updated');
 			var json = JSON.parse(raw);
 			helper.log.trace(json);
 			var temp = { max: -999, min: 999 };
@@ -28,7 +27,10 @@ var updateWeather = function () {
 				temp.min = Math.min(temp.min, item.temperature);
 			});
 			json.hourly.temperature = temp;
-			data.setData('weather', json);
+			Object.keys(json).forEach(function (key) {
+				data.setDatapoint('weather', 'ch0000', key, json[key]);
+			});
+			helper.log.info('weather updated');
 		});
 	}).on('error', function (e) {
 		helper.log.error('error updating weather: ' + e.message);

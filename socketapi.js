@@ -77,7 +77,7 @@ function set (d, conn) {
 			break;
 		
 		case 'weather':
-			var weather = data.getData('weather');
+			var weather = data.getActuatorData('weather', 'ch0000');
 			conn.sendText(JSON.stringify({'weather': weather}));
 			break;
 		
