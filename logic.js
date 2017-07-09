@@ -28,7 +28,9 @@ var updateDayNight = function () {
         times.isNight = true;
     }
 
-    data.setData('daynight', times);
+    Object.keys(times).forEach(function (key) {
+        data.setDatapoint('daynight', 'ch0000', key, times[key]);
+    });
 
     helper.log.info('day & night updated');
     helper.log.trace(times);

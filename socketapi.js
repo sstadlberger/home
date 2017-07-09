@@ -82,7 +82,7 @@ function set (d, conn) {
 			break;
 		
 		case 'daynight':
-			var daynight = data.getData('daynight');
+			var daynight = data.getActuatorData('daynight', 'ch0000');
 			conn.sendText(JSON.stringify({'daynight': daynight}));
 			break;
 		
