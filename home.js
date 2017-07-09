@@ -39,8 +39,16 @@ if (argv.useDB == true) {
 }
 
 
+// set Homematic
+global.useHomematic = false;
+if (argv.useHomematic == true) {
+	global.useHomematic = true;
+}
+
+
 // all paramaters are ok, load the rest
 var sysap = require('./sysap.js');
+var sysap = require('./homematic.js');
 var webapi = require('./webapi.js');
 var socketapi = require('./socketapi.js');
 var logic = require('./logic.js');

@@ -1,5 +1,6 @@
 var config = {};
 
+// config for Busch Jäger free@home
 config.bosh = {
 	url: 'http://URL_TO_SYSAP:5280/http-bind',
 	jid: 'JID@busch-jaeger.de',
@@ -13,6 +14,14 @@ config.websocket = {
 	resource: 'nodeapi',
 	password: 'PASSWORD'
 };
+
+
+// config for Homematic
+config.homematic = {
+	ccuIP: 'CCUIP',
+	ccuPort: '2001',
+	localPort: '8030'
+}
 
 
 // used for weather (optional)
