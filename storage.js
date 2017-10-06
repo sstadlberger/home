@@ -29,7 +29,8 @@ if (global.useDB) {
 
 var inputPowermeter = function (data) {
 	var mapping = {
-		'1.8.0': 'kwh',
+		'1.8.0': 'kwh_in',
+		'2.8.0': 'kwh_out',
 		'32.7': 'v1',
 		'52.7': 'v2',
 		'72.7': 'v3',
@@ -69,7 +70,7 @@ var inputPowermeter = function (data) {
 };
 
 var currentPower = function (callback) {
-	var sql = 'SELECT id, (SELECT MIN(ts) FROM powerdata) AS min, ts AS max, kwh, v1, v2, v3, a1, a2, a3, pf, hz, outages, kw FROM powerdata ORDER BY id DESC LIMIT 1';
+	var sql = 'SELECT id, (SELECT MIN(ts) FROM powerdata) AS min, ts AS max, kwh_in, kwh_out, v1, v2, v3, a1, a2, a3, pf, hz, outages, kw FROM powerdata ORDER BY id DESC LIMIT 1';
 	if (global.useDB) {
 		var query = connection.query(sql, function (err, result, fields, res) {
 			if (err) {

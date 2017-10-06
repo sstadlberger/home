@@ -4,7 +4,8 @@ USE powermeter;
 CREATE TABLE powerdata (
 id int(11) NOT NULL,
 	ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	kwh float(8,3) NOT NULL,
+	kwh_in float(8,3) NOT NULL,
+	kwh_out float(8,3) NOT NULL,
 	v1 int(11) NOT NULL,
 	v2 int(11) NOT NULL,
 	v3 int(11) NOT NULL,
