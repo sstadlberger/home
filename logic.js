@@ -32,7 +32,7 @@ var updateDayNight = function () {
         data.setDatapoint('daynight', 'ch0000', key, times[key]);
     });
 
-    helper.log.info('day & night updated');
+    helper.log.warn('day & night updated');
     helper.log.trace(times);
 
 	setTimeout(updateDayNight, 1 * 60 * 1000);
