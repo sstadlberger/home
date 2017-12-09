@@ -1,26 +1,82 @@
 # Home
 Custom Interface / API for the Busch Jäger free@home system (home automation). 
 
+# Content
+* [Prerequisites](#prerequisites)
+* [Usage](#usage)
+  * [Overview](#overview)
+  * [Config Files](#config-files)
+    * [config.js](#config.js)
+    * [data.json](#data.json)
+    * [structure.json](#structure.json)
+    * [storage.mysql](#storage.mysql)
+* [Current Status](#current-status)
+  * [Known Bugs](#known-bugs)
+  * [Planned Improvements](#planned-improvements)
+* [License](#license)
+* [Current Version](#current-version)
+
+
 # Prerequisites
 - Node.js 5.5 (tested, earlier version might work)
 
 The following Node.js modules:
-- t.b.d.
+- body-parser
+- cors
+- express
+- md5
+- mysql (optional)
+- node-xmpp-client
+- nodejs-websocket
+- suncalc
+
+# Usage
+## Overview
+1. install node.js: **_https://nodejs.org/_**
+2. clone the repository: **_git clone git@github.com:sstadlberger/home.git_**
+3. cd into the project root and install the node modules: **_npm install_**
+4. configure the **_config.js_**, **_data.json_** and **_structure.json_** files (see the files themselves and above for more information)
+5. run it with: **_node home.js_** (possible options: --loglevel=debug --useWeather --useDB --useHomematic)
+
+## Config Files
+### config.js
+1. create a copy of config.default.js and rename it to config.js
+2. fill in config.bosh & config.websocket<br>
+   The JID can be found here: http://yourSysAPIP/settings.json
+3. If you want to use the weather feature you need to create an API key here:<br>
+   https://darksky.net/dev<br>
+   1000 requests per day are free, home uses normally 144 per day (one request every 10 minutes)
+### data.json
+1. create a copy of data.default.json and rename it to data.json
+2. unless you use custom sensors or actuators (i.e. self built), you don't need to change anything
+### structure.json
+1. create a copy of structure.default.json and rename it to structure.json
+2. modify the file so that it matches your home layout (this is mainly used for a not yet released visual frontend)
+### storage.mysql
+1. this is optional
+2. run the file in your mySQL database to create the table structure
+3. this currently only used to store the data of a Landis+Gyr E350 powermeter
 
 # Current Status
 
-## Timers
+## Known Bugs
+- not all actuators are yet supported (i.e. 8/8)
+- with some of the latest update (probably SysAP 2.1.2 and newer) the thermostat settings broke 
+- see here for more information: https://github.com/sstadlberger/home/issues
+
+## Planned Improvements
+### Timers
 Add the ability to execute actions at certain times or intervalls. For example:
 - Switch the light off in 10 minutes
 - Open the shutters at 7:00
 - Turn on the ambient light at 30 minutes after sunset
 
-## Triggers
+### Triggers
 Add the abilities to exectute actions at certain conditions. For example:
 - Add a timer for 10 minutes after Light has been switched on
 - Close the shutters if the light has been switched on after sunset
 
-## Homematic
+### Homematic
 Add support for Homematic sensors and actuators to enable easy expansion of the system.
 
 # License
