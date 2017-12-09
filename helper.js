@@ -83,7 +83,9 @@ log.printlog = function (level, message, dontPrintFull) {
 			message = util.inspect(message, { depth: null, colors: true });
 			message = "\n" + message;
 		}
-		console.log(datestring + prefix + message);
+		if (!global.logFilter || message.includes(global.logFilter)) {
+			console.log(datestring + prefix + message);
+		}
 	}
 }
 

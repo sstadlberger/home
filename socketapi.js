@@ -9,7 +9,7 @@ var data = require('./data.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
-var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'weather', 'message', 'powermeter', 'daynight'];
+var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'logFilter', 'weather', 'message', 'powermeter', 'daynight'];
 
 var socket = nodejsWebsocket.createServer(function (conn) {
 	helper.log.info('[' + conn.socket.remoteAddress + '] websocket started');
@@ -124,6 +124,16 @@ function set (d, conn) {
 			}
 			break;
 		
+		case 'logFilter':
+			if (d.length < 1 || (d.length == 1 && d[0] == '')) {
+				global.logFilter = false;
+				helper.log.info('logFilter disabled');
+			} else {
+				helper.log.info('logFilter set to: ' + d.join('/'));
+				global.logFilter = d.join('/');
+			}
+			break;
+
 		case 'message':
 			helper.log.info('[' + conn.socket.remoteAddress + '] websocket message: ' + d.join('/'));
 			break;

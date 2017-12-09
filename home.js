@@ -23,6 +23,12 @@ if (argv.loglevel) {
 		global.loglevel = helper.log.loglevel[argv.loglevel];
 	}
 }
+if (argv.logFilter) {
+	console.log('logFilter set to: ' + argv.logFilter);
+	global.logFilter = argv.logFilter;
+} else {
+	global.logFilter = false;
+}
 
 
 // set weather
