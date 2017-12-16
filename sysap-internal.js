@@ -54,12 +54,12 @@ var options = {
 		}
 	},
 	'thermostat': {
-		'dp': 'odp0007',
+		'dp': 'odp0010',
 		'infos':  {
-			'odp0003': 'x-set',
+			'odp0007': 'x-set',
 			'odp0000': 'x-heat',
-			'odp0006': 'x-on',
-			'odp0008': 'x-eco',
+			'odp0008': 'x-on',
+			'odp0009': 'x-eco',
 		}
 	},
 	'temperature': {
@@ -447,23 +447,36 @@ var status = function () {
 															}
 														}
 													} else if (type == 'thermostat') {
+														// room temperature: odp0010
+														// set temperature: odp0007 (degrees above base temperature)
+														// eco mode: odp0009:
+														//		36 Eco heating on
+														//		68 Eco heating off
+														//		33 heating on
+														//		65 heating off
+														// is heating: odp0000 (0 = off; >0 = heating)
+														// off: odp0008
+														// base temperature: pm0002
+														// eco temperature offset: pm0000
 														if (name == 'x-set') {
-															value = 21 + parseFloat(actuators[sn].channels[cn].datapoints['odp0003']);
-															if (actuators[sn].channels[cn].datapoints['odp0008'] == 68 && actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															value = parseFloat(actuators[sn].channels[cn].datapoints['pm0002']) + parseFloat(actuators[sn].channels[cn].datapoints['odp0007']);
+															// if eco is on (68 = heating is off, 36 = heating is on)
+															if (actuators[sn].channels[cn].datapoints['odp0009'] == 68 || actuators[sn].channels[cn].datapoints['odp0009'] == 36) {
 																// show the real eco target temperature
 																value = value - parseFloat(actuators[sn].channels[cn].datapoints['pm0000']);
 															}
-															if (actuators[sn].channels[cn].datapoints['odp0006'] != 1) {
+															if (actuators[sn].channels[cn].datapoints['odp0008'] != 1) {
 																// off
 																value = 0;
 															}
 														} else if (name == 'x-heat') {
 															value = actuators[sn].channels[cn].datapoints['odp0000'] > 0 ? true : false;
 														} else if (name == 'x-on') {
-															value = actuators[sn].channels[cn].datapoints['odp0006'] == 1 ? true : false;
+															value = actuators[sn].channels[cn].datapoints['odp0008'] == 1 ? true : false;
 														} else if (name == 'x-eco') {
 															value = false;
-															if ((actuators[sn].channels[cn].datapoints['odp0008'] == 68 || actuators[sn].channels[cn].datapoints['odp0008'] == 36) && actuators[sn].channels[cn].datapoints['odp0006'] == 1) {
+															// if eco is on (68 = heating is off, 36 = heating is on) and thermostat is not disabled
+															if ((actuators[sn].channels[cn].datapoints['odp0009'] == 68 || actuators[sn].channels[cn].datapoints['odp0009'] == 36) && actuators[sn].channels[cn].datapoints['odp0008'] == 1) {
 																value = true;
 															}
 														}
