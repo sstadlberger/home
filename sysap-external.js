@@ -171,11 +171,11 @@ var set = function (serialnumber, channel, datapoint, value) {
 		// odp0000 = 0, 1: not moving
 		// odp0000 = 3: moving down
 		// odp0000 = 2: moving up
-		// pm0006: motor delay in ms
+		// pm0008: motor delay in ms
 		value = value.substr(2);
 		setTimeout(function () {
 			set(serialnumber, channel, 'idp0001', 1)
-		}, 200 + parseInt(d[serialnumber].channels[channel].datapoints['pm0006']));
+		}, 200 + parseInt(d[serialnumber].channels[channel].datapoints['pm0008']));
 	} else if (typeof value === 'string' && (value.substr(0, 1) == '-' || value.substr(0, 1) == '+')) {
 		// rise or lower set temperature by x degrees
 		var changeValue = parseFloat(value.substr(1)) * (value.substr(0, 1) == '-' ? -1 : 1);
