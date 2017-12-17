@@ -85,14 +85,14 @@ var parse = function (type, serialnumber, channel, action, value) {
 		},
 		'thermostat' : {
 			'actions' : {
-				'toggle' : { 'idp000B' : 'x' },
-				'set' : { 'idp0007' : (value - 21) },
-				'up' : { 'idp0007' : '+0.5' },
-				'down' : { 'idp0007' : '-0.5' },
-				'on' : { 'idp000B' : 1 },
-				'off' : { 'idp000B' : 0 },
-				'eco-on' : { 'idp0009' : 1 },
-				'eco-off' : { 'idp0009' : 0 }
+				'toggle' : { 'idp0012' : 'x' },
+				'set' : { 'idp0016' : value },
+				'up' : { 'idp0016' : '+0.5' },
+				'down' : { 'idp0016' : '-0.5' },
+				'on' : { 'idp0012' : 1 },
+				'off' : { 'idp0012' : 0 },
+				'eco-on' : { 'idp0011' : 1 },
+				'eco-off' : { 'idp0011' : 0 }
 			}
 		}
 	}
@@ -143,7 +143,9 @@ var set = function (serialnumber, channel, datapoint, value) {
 	if (value == 'x') {
 		if (d[serialnumber].deviceId == '9004') {
 			// thermostat
-			var current = d[serialnumber].channels[channel].datapoints['odp0006'];
+			// current on/off status is stored in odp0008
+			// is set in idp0012
+			var current = d[serialnumber].channels[channel].datapoints['odp0008'];
 			value = current == 1 ? 0 : 1;
 		} else {
 			// default: the idp and opd have the same id, so it's possible to just switch the 'i' and 'o'
@@ -177,8 +179,9 @@ var set = function (serialnumber, channel, datapoint, value) {
 	} else if (typeof value === 'string' && (value.substr(0, 1) == '-' || value.substr(0, 1) == '+')) {
 		// rise or lower set temperature by x degrees
 		var changeValue = parseFloat(value.substr(1)) * (value.substr(0, 1) == '-' ? -1 : 1);
-		// value is set as difference to 21°C
-		value = parseFloat(d[serialnumber].channels[channel].datapoints['odp0002']) + changeValue - 21;
+		// value is now set as absolute
+		// odp0007 (°C above base temparature) + changeValue + pm0002 (base temerature)
+		value = parseFloat(d[serialnumber].channels[channel].datapoints['odp0007']) + changeValue + parseFloat(d[serialnumber].channels[channel].datapoints['pm0002']);
 	}
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',

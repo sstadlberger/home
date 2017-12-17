@@ -198,8 +198,9 @@ var update = function (stanza) {
 	helper.ltx.getElements(stanza, ['event', 'items', 'item']).forEach(function (item) {
 		
 		// parse payload
-		// no XML verification, let's hope that Busch Jäger produces writes valid XML in this case
+		// no XML verification, let's hope that Busch Jaeger sends valid XML in this case
 		var update = ltx.parse(helper.ltx.getElementText(item, ['update', 'data']));
+		helper.log.trace('[RECEIVED Payload] ' + update.toString());
 		
 		if (update) { 
 			helper.log.debug('valid update paket');
@@ -496,7 +497,7 @@ var status = function () {
 		}
 	}
 	helper.log.trace('status for interface updated');
-	helper.log.trace(util.inspect(status, {showHidden: false, depth: null}));
+	//helper.log.trace(util.inspect(status, {showHidden: false, depth: null}));
 	data.setData('status', status);
 }
 
@@ -551,7 +552,7 @@ var updateStructure = function () {
 	};
 	
 	helper.log.info('structure for interface updated');
-	helper.log.trace(util.inspect(main, {showHidden: false, depth: null}));
+	//helper.log.trace(util.inspect(main, {showHidden: false, depth: null}));
 	data.setData('structure', main);
 }
 
