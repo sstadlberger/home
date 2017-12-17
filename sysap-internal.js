@@ -37,7 +37,7 @@ var options = {
 		'dp': 'odp0001',
 		'infos':  {
 			'odp0002': 'x-angle',
-			'pm0002': 'x-fullclosed',
+			'pm0003': 'x-fullclosed',
 			'pm0000':  'upspeed',
 			'pm0001': 'downspeed',
 			'odp0000': 'moving'
@@ -49,7 +49,7 @@ var options = {
 			'odp0002': 'angle',
 			'pm0000':  'upspeed',
 			'pm0001': 'downspeed',
-			'pm0002': 'fullclosed',
+			'pm0003': 'fullclosed',
 			'odp0000': 'moving'
 		}
 	},
@@ -603,7 +603,8 @@ var _typeHelper = function (actuators, type, sn, ch, extra) {
 		case 'shutter':
 			if (typeof extra !== undefined && extra == 'single') {
 				type = 'motor';
-			} else if (actuators[sn].channels[ch].datapoints['pm0002'] > 0) {
+			} else if (actuators[sn].channels[ch].datapoints['pm0003'] > 0) {
+				// automatic blind detection only works if slat movement time (Lamellen-Fahrzeit) is set to a value greater than 0ms
 				type = 'blind';
 			}
 			break;
