@@ -10,17 +10,17 @@ var argv = require('minimist')(process.argv.slice(2));
 
 
 // set log level
-// helper.log.loglevel contains all log levels
-// info (helper.log.loglevel.info) is set as default if no other loglevel is chosen
-global.loglevel = helper.log.loglevel.info;
-if (argv.loglevel) {
-	var valid = Object.keys(helper.log.loglevel);
-	if (valid.indexOf(argv.loglevel) == -1) {
-		console.log('invalid loglevel argument: ' + argv.loglevel);
+// helper.log.logLevel contains all log levels
+// info (helper.log.logLevel.info) is set as default if no other logLevel is chosen
+global.logLevel = helper.log.logLevel.info;
+if (argv.logLevel) {
+	var valid = Object.keys(helper.log.logLevel);
+	if (valid.indexOf(argv.logLevel) == -1) {
+		console.log('invalid logLevel argument: ' + argv.logLevel);
 		console.log('valid arguments are: ' + valid.join(', '));
 		process.exit();
 	} else {
-		global.loglevel = helper.log.loglevel[argv.loglevel];
+		global.logLevel = helper.log.logLevel[argv.logLevel];
 	}
 }
 if (argv.logFilter) {

@@ -9,7 +9,7 @@ var data = require('./data.js');
 var helper = require('./helper.js');
 var md5 = require('md5');
 
-var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'loglevel', 'logFilter', 'weather', 'message', 'powermeter', 'daynight'];
+var valid = ['set', 'info', 'structure', 'raw', 'status', 'update', 'logLevel', 'logFilter', 'weather', 'message', 'powermeter', 'daynight'];
 
 var socket = nodejsWebsocket.createServer(function (conn) {
 	helper.log.info('[' + conn.socket.remoteAddress + '] websocket started');
@@ -106,21 +106,21 @@ function set (d, conn) {
 			}
 			break;
 			
-		case 'loglevel':
+		case 'logLevel':
 			if (d.length == 1) {
-				var newLoglevel = d[0];
-				var valid = Object.keys(helper.log.loglevel);
-				if (valid.indexOf(newLoglevel) == -1) {
-					conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + newLoglevel}));
-					helper.log.error('[' + conn.socket.remoteAddress + '] invalid loglevel command: ' + newLoglevel);
+				var newlogLevel = d[0];
+				var valid = Object.keys(helper.log.logLevel);
+				if (valid.indexOf(newlogLevel) == -1) {
+					conn.sendText(JSON.stringify({'error': 'invalid logLevel command: ' + newlogLevel}));
+					helper.log.error('[' + conn.socket.remoteAddress + '] invalid logLevel command: ' + newlogLevel);
 				} else {
-					global.loglevel = helper.log.loglevel[newLoglevel];
-					conn.sendText(JSON.stringify({'result': 'loglevel set to ' + newLoglevel}));
-					helper.log.info('[' + conn.socket.remoteAddress + '] loglevel set to ' + newLoglevel);
+					global.logLevel = helper.log.logLevel[newlogLevel];
+					conn.sendText(JSON.stringify({'result': 'logLevel set to ' + newlogLevel}));
+					helper.log.info('[' + conn.socket.remoteAddress + '] logLevel set to ' + newlogLevel);
 				}
 			} else {
-				conn.sendText(JSON.stringify({'error': 'invalid loglevel command: ' + d.join(' ')}));
-				helper.log.error('[' + conn.socket.remoteAddress + '] invaild loglevel command: ' + d.join('/'));
+				conn.sendText(JSON.stringify({'error': 'invalid logLevel command: ' + d.join(' ')}));
+				helper.log.error('[' + conn.socket.remoteAddress + '] invaild logLevel command: ' + d.join('/'));
 			}
 			break;
 		

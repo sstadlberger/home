@@ -36,7 +36,7 @@ The following Node.js modules:
 2. clone the repository: **_git clone git@github.com:sstadlberger/home.git_**
 3. cd into the project root and install the node modules: **_npm install_**
 4. configure the **_config.js_**, **_data.json_** and **_structure.json_** files (see the files themselves and above for more information)
-5. run it with: **_node home.js_** (possible options: --loglevel=debug --useWeather --useDB --useHomematic)
+5. run it with: **_node home.js_** (possible options: --logLevel=debug --useWeather --useDB --useHomematic)
 
 ## Config Files
 ### config.js

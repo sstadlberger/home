@@ -64,7 +64,7 @@ module.exports.ltx = ltx;
 
 var log = {};
 
-log.loglevel = {
+log.logLevel = {
 	'all' : 1024,
 	'trace' : 32,
 	'debug' : 16,
@@ -75,7 +75,7 @@ log.loglevel = {
 };
 
 log.printlog = function (level, message, dontPrintFull) {
-	if (this.loglevel[level] <= global.loglevel) {
+	if (this.logLevel[level] <= global.logLevel) {
 		prefix = ('[' + level + ']  ').slice(0, 8);
 		var now = new Date();
 		var datestring = now.toISOString().slice(0, 10) + ' ' + now.toLocaleTimeString() + ' ';
