@@ -497,7 +497,7 @@ var status = function () {
 		}
 	}
 	helper.log.trace('status for interface updated');
-	//helper.log.trace(util.inspect(status, {showHidden: false, depth: null}));
+	helper.log.trace(util.inspect(status, {showHidden: false, depth: null}));
 	data.setData('status', status);
 }
 
@@ -552,7 +552,7 @@ var updateStructure = function () {
 	};
 	
 	helper.log.info('structure for interface updated');
-	//helper.log.trace(util.inspect(main, {showHidden: false, depth: null}));
+	helper.log.trace(util.inspect(main, {showHidden: false, depth: null}));
 	data.setData('structure', main);
 }
 
