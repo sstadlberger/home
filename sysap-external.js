@@ -32,7 +32,8 @@ var parse = function (type, serialnumber, channel, action, value) {
 			},
 			'deviceIds' : [
 				'B002', // Schaltaktor 4-fach, 16A, REG
-				'100E' // Sensor/ Schaltaktor 2/1-fach
+				'100E', // Sensor/ Schaltaktor 2/1-fach
+				'B008' // Sensor/ Schaltaktor 8/8fach, REG
 			]
 		},
 		'switchgroup' : {
@@ -53,7 +54,8 @@ var parse = function (type, serialnumber, channel, action, value) {
 				'set' : { 'idp0002' : value }
 			},
 			'deviceIds' : [
-				'101C' // Dimmaktor 4-fach
+				'101C', // Dimmaktor 4-fach
+				'1021' // Dimmaktor 4-fach v2
 			]
 		},
 		'shutter' : {

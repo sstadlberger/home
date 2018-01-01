@@ -18,7 +18,9 @@ var util = require('util');
 var deviceTypes = {
 	'B002': 'switch',
 	'100E': 'switch',
+	'B008': 'switch',
 	'101C': 'dimmer',
+	'1021': 'dimmer',
 	'B001': 'shutter',
 	'1013': 'shutter',
 	'9004': 'thermostat',
