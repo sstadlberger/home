@@ -69,7 +69,7 @@ ABB123456789 is the serial number of the actuator you're trying to control.
 To see all data from an actuator use the following URL:
 http://yourLocalIP:8080/info/ABB123456789/
 
-An overview of all available commands can be found in the [REST API] (webapi.js) and the [SysAP API (parse function)] (sysap-external.js)
+An overview of all available commands can be found in the [REST API](webapi.js) and the [SysAP API (parse function)](sysap-external.js)
 ### Websocket API
 Connect with a websocket client on port 8001
 You will automatically receive status updates in JSON format. 
@@ -77,7 +77,7 @@ You will automatically receive status updates in JSON format.
 To switch on a light use the following command syntax: set/switch/ABB123456789/ch0000/on
 ABB123456789 is the serial number of the actuator you're trying to control.
 
-An overview of all available commands can be found in the [Websocket API] (socketapi.js) and the [SysAP API (parse function)] (sysap-external.js)
+An overview of all available commands can be found in the [Websocket API](socketapi.js) and the [SysAP API (parse function)](sysap-external.js)
 
 # Current Status
 
