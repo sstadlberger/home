@@ -10,6 +10,9 @@ Custom Interface / API for the Busch Jäger free@home system (home automation).
     * [data.json](#datajson)
     * [structure.json](#structurejson)
     * [storage.mysql](#storagemysql)
+  * [API](#api)
+    * [REST API](#rest-api)
+    * [Websocket API](#websocket-api)
 * [Current Status](#current-status)
   * [Known Bugs](#known-bugs)
   * [Planned Improvements](#planned-improvements)
@@ -57,11 +60,28 @@ The following Node.js modules:
 2. run the file in your mySQL database to create the table structure
 3. this currently only used to store the data of a Landis+Gyr E350 powermeter
 
+## API
+### REST API
+When the software is running, you can call into the REST API using a browser. For example, to switch a light on:
+http://yourLocalIP:8080/set/switch/ABB123456789/ch0000/on
+ABB123456789 is the serial number of the actuator you're trying to control.
+
+To see all data from an actuator use the following URL:
+http://yourLocalIP:8080/info/ABB123456789/
+
+An overview of all available commands can be found in the [REST API] (webapi.js) and the [SysAP API (parse function)] (sysap-external.js)
+### Websocket API
+Connect with a websocket client on port 8001
+You will automatically receive status updates in JSON format. 
+
+To switch on a light use the following command syntax: set/switch/ABB123456789/ch0000/on
+ABB123456789 is the serial number of the actuator you're trying to control.
+
+An overview of all available commands can be found in the [Websocket API] (socketapi.js) and the [SysAP API (parse function)] (sysap-external.js)
+
 # Current Status
 
 ## Known Bugs
-- not all actuators are yet supported (i.e. 8/8)
-- with some of the latest update (probably SysAP 2.1.2 and newer) the thermostat settings broke 
 - see here for more information: https://github.com/sstadlberger/home/issues
 
 ## Planned Improvements
@@ -78,6 +98,12 @@ Add the abilities to exectute actions at certain conditions. For example:
 
 ### Homematic
 Add support for Homematic sensors and actuators to enable easy expansion of the system.
+
+### Philips Hue
+Native support for Philips Hue, including switches and motion sensors
+
+### Amazon Alexa
+Development is currently on hold, depending on the release of the Busch Jaeger version
 
 # License
 This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
