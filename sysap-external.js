@@ -190,6 +190,8 @@ var set = function (serialnumber, channel, datapoint, value) {
 	var setData = new xmpp_client.Element('iq', {
 		type: 'set',
 		to: 'mrha@busch-jaeger.de/rpc',
+		xmlns: 'jabber:client',
+		id: Date.now(),
 	})
 		.c('query', {
 			xmlns: 'jabber:iq:rpc'
