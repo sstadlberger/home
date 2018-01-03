@@ -141,8 +141,12 @@ function keepAlive (seconds) {
 	helper.log.trace('[SEND] ' + ping.root().toString());
 	lastping = count;
 	sysap.send(ping);
-	
-	setTimeout(keepAlive, seconds * 1000);
+	setTimeout(
+		function () {
+			keepAlive(seconds);
+		}, 
+		seconds * 1000
+	);
 }
 
 sysap_internal.updateStructure();
