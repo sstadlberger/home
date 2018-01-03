@@ -13,6 +13,7 @@ Custom Interface / API for the Busch Jäger free@home system (home automation).
   * [API](#api)
     * [REST API](#rest-api)
     * [Websocket API](#websocket-api)
+  * [Known Limitations](#known-limitations)
 * [Current Status](#current-status)
   * [Known Bugs](#known-bugs)
   * [Planned Improvements](#planned-improvements)
@@ -78,6 +79,11 @@ To switch on a light use the following command syntax: set/switch/ABB123456789/c
 ABB123456789 is the serial number of the actuator you're trying to control.
 
 An overview of all available commands can be found in the [Websocket API](socketapi.js) and the [SysAP API (parse function)](sysap-external.js)
+
+## Known Limitations
+- Only one single user can be logged in at the same time. When you login in the webinterface as the same user you are using for the API you will be disconnected. It is recommended that you create an extra user just for the API which does not have admin status.
+- After a restart of the SysAP the user has to login once into the webinterface before the user can access the API.
+- Only actuators that are used in the webinterface can be accessed by the API. If an actuator is not used (i.e. dragged on the floor plan) it can not be controlled with the API.
 
 # Current Status
 
