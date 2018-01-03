@@ -21,6 +21,7 @@ if (argv.logLevel) {
 		process.exit();
 	} else {
 		global.logLevel = helper.log.logLevel[argv.logLevel];
+		console.log('logLevel set to: ' + argv.logLevel + ' (' + helper.log.logLevel[argv.logLevel] + ')');
 	}
 }
 if (argv.logFilter) {
