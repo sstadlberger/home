@@ -83,7 +83,7 @@ sysap.on('stanza', function(stanza) {
 		} else {
 			helper.log.debug('result packet received');
 			// parse the master object
-			sysap_internal.response(stanza);
+			sysap_internal.masterUpdate(stanza);
 			// update the data model
 			sysap_internal.status();
 		}

@@ -245,7 +245,7 @@ var update = function (stanza) {
  * 
  * @param {Object} stanza - a node-xmpp-client xml data packet
  */
-var response = function (stanza) {
+var masterUpdate = function (stanza) {
 	helper.ltx.getElements(stanza, ['query', 'methodResponse', 'params', 'param']).forEach(function (param) {
 		
 		helper.ltx.getElements(param, ['value', 'boolean']).forEach(function (value) {
@@ -626,6 +626,6 @@ module.exports.presence = presence;
 module.exports.subscribe = subscribe;
 module.exports.subscribed = subscribed;
 module.exports.update = update;
-module.exports.response = response;
+module.exports.masterUpdate = masterUpdate;
 module.exports.status = status;
 module.exports.updateStructure = updateStructure;
