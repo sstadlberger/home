@@ -22,7 +22,7 @@ Custom Interface / API for the Busch Jäger free@home system (home automation).
 
 
 # Prerequisites
-- Node.js 5.5 (tested, earlier version might work)
+- Node.js 5.5 (tested, earlier and later versions might work; 9.3 is currently being successfully tested so far)
 
 The following Node.js modules:
 - body-parser
@@ -43,6 +43,7 @@ The following Node.js modules:
 5. run it with: **_node home.js_** (possible options: --logLevel=debug --useWeather --useDB --useHomematic)
 
 ## Config Files
+The config files are located all in **_config/_**
 ### config.js
 1. create a copy of config.default.js and rename it to config.js
 2. fill in config.bosh & config.websocket<br>
@@ -70,7 +71,7 @@ ABB123456789 is the serial number of the actuator you're trying to control.
 To see all data from an actuator use the following URL:
 http://yourLocalIP:8080/info/ABB123456789/
 
-An overview of all available commands can be found in the [REST API](webapi.js) and the [SysAP API (parse function)](sysap-external.js)
+An overview of all available commands can be found in the [REST API](lib/api/webapi.js) and the [SysAP API (parse function)](lib/freeathome/sysap-external.js)
 ### Websocket API
 Connect with a websocket client on port 8001
 You will automatically receive status updates in JSON format. 
@@ -78,7 +79,7 @@ You will automatically receive status updates in JSON format.
 To switch on a light use the following command syntax: set/switch/ABB123456789/ch0000/on
 ABB123456789 is the serial number of the actuator you're trying to control.
 
-An overview of all available commands can be found in the [Websocket API](socketapi.js) and the [SysAP API (parse function)](sysap-external.js)
+An overview of all available commands can be found in the [Websocket API](lib/api/socketapi.js) and the [SysAP API (parse function)](lib/freeathome/sysap-external.js)
 
 ## Known Limitations
 - Only one single user can be logged in at the same time. When you login in the webinterface as the same user you are using for the API you will be disconnected. It is recommended that you create an extra user just for the API which does not have admin status.
