@@ -13,7 +13,9 @@
     "mysql": "^2.13.0",
     "node-xmpp-client": "^3.1.2",
     "nodejs-websocket": "^1.7.1",
-    "suncalc": "^1.8.0"
+    "suncalc": "^1.8.0",
+    "binrpc": "^3.1.0",
+    "ip": "^1.1.5"
   },
   "devDependencies": {},
   "scripts": {

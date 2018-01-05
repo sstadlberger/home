@@ -5,7 +5,7 @@
 
 
 // startup with parameters
-var helper = require('./helper.js');
+var helper = require('./lib/helper');
 var argv = require('minimist')(process.argv.slice(2));
 
 
@@ -54,11 +54,9 @@ if (argv.useHomematic == true) {
 
 
 // all paramaters are ok, load the rest
-var sysap = require('./sysap.js');
-var sysap = require('./homematic.js');
-var webapi = require('./webapi.js');
-var socketapi = require('./socketapi.js');
-var logic = require('./logic.js');
-var weather = require('./weather.js');
+var sysap = require('./lib/freeathome');
+var homematic = require('./lib/homematic');
+var api = require('./lib/api');
+var weather = require('./lib/weather');
 
 helper.log.info('home started');
