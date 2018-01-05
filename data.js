@@ -18,6 +18,8 @@ format of the data.json file and the coresponding data object
 actuators: 
 	all actuators and their status; this can come from multiple sources
 	general format: serialnumber -> channel -> datapoint -> value
+	There is a special case for weather. It is stored as an actuator with the sn set to 
+	weather and all data is in the datapoint of ch0000
 	actuators: {
 		SERIALNUMBER: {
 			serialNumber: "SERIALNUMBER",
@@ -30,6 +32,17 @@ actuators:
 					}
 				},
 				...
+			}
+		},
+		weather: {
+			serialNumber: "weather",
+			channels: {
+				ch0000: {
+					datapoints: {
+						contains a data response from the Dark Sky API
+						see here for the documentation: https://darksky.net/dev/docs
+					}
+				}
 			}
 		}
 	}
@@ -107,10 +120,6 @@ structure:
 		...
 		]
 	}
-
-weather:
-	contains a data response from the Dark Sky API
-	see here for the documentation: https://darksky.net/dev/docs
 
 daynight:
 	contains the sunset & sunrise data
@@ -194,6 +203,24 @@ var setData = function (what, whatData) {
 }
 
 /**
+ * sends out a weather update
+ * weather is stored as an actuator with the sn set to 'weather' and the data is in ch0000
+ * 
+ * @param {boolean} broadcast - if set to true it will broadcast the weather data to all connected websocket clients
+ * 
+ * @returns {Object} - the complete weather data
+ */
+var getWeather = function (broadcast) {
+	var weather = getActuatorData('weather', 'ch0000');
+	if (broadcast) {
+		var sendData = {};
+		sendData['weather'] = weather;
+		websocket.broadcast(JSON.stringify(sendData));
+	}
+	return weather;
+}
+
+/**
  * adds an actuator to the master data structure
  *  
  * @param {string} serialNumberUnique - the unique identifier for the actuator; can be different from serialNumber if serialNumber is not unique (e.g. with Busch Jäger SysAP Scenes)
@@ -240,3 +267,4 @@ module.exports.getData = getData;
 module.exports.setData = setData;
 module.exports.createActuator = createActuator;
 module.exports.getActuatorData = getActuatorData;
+module.exports.getWeather = getWeather;

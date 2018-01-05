@@ -27,9 +27,12 @@ var updateWeather = function () {
 				temp.min = Math.min(temp.min, item.temperature);
 			});
 			json.hourly.temperature = temp;
+			// weather is stored in datapoints so it can be used in triggers
 			Object.keys(json).forEach(function (key) {
 				data.setDatapoint('weather', 'ch0000', key, json[key]);
 			});
+			// broadcasts the weather
+			data.getWeather(true);
 			helper.log.info('weather updated');
 		});
 	}).on('error', function (e) {
