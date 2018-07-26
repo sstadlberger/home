@@ -30,10 +30,11 @@ config.location = {
 	long: '1.2345'
 };
 
+// config for weather
 config.weather = {
-	url: 'https://api.forecast.io/forecast/APIKEY/' + config.location.lat + ',' + config.location.long + '?units=si&lang=de'
+	host: 'api.forecast.io',
+	path: '/forecast/APIKEY/' + config.location.lat + ',' + config.location.long + '?units=si&lang=de'
 };
-
 
 //  used for data storage (optional)
 config.mysql = {
