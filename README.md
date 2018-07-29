@@ -22,7 +22,7 @@ Custom Interface / API for the Busch Jäger free@home system (home automation).
 
 
 # Prerequisites
-- Node.js 5.5 (tested, earlier and later versions might work; 9.3 is currently being successfully tested so far)
+- Node.js 5.5 (tested, earlier and later versions might work; 10.7 is currently being successfully tested so far)
 
 The following Node.js modules:
 - body-parser
