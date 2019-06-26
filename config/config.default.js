@@ -18,7 +18,7 @@ config.webapi = {
 // config for Busch Jäger free@home
 config.bosh = {
 	url: 'http://' + SYSAP_HOST + ':5280/http-bind',
-	jid: SYSAP_URL,
+	jid: SYSAP_JID,
 	resource: 'nodeapi',
 	password: SYSAP_PASSWORD
 };
