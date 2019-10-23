@@ -1,3 +1,7 @@
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
+
+
 > **NOTE:** This package is no longer maintained. I've moved my Free@Home setup to openHAB with this binding: https://github.com/ruebox/openhab2-addons/tree/feature_binding_freeathome/addons/binding/org.openhab.binding.freeathome
 
 
